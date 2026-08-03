@@ -39,6 +39,9 @@ final class DiagnosticsLogger {
     private(set) var entries: [Entry] = []
 
     private let maxEntries = 500
+    /// Extra entries tolerated past `maxEntries` before trimming. Without
+    /// slack, every entry past the cap would trigger a full-file rewrite.
+    private let trimSlack = 50
     private let fileURL: URL
     private let writeQueue = DispatchQueue(label: "BabelTable.Diag.write", qos: .utility)
 
@@ -52,7 +55,7 @@ final class DiagnosticsLogger {
 
     func record(_ entry: Entry) {
         entries.append(entry)
-        let didTrim = entries.count > maxEntries
+        let didTrim = entries.count > maxEntries + trimSlack
         if didTrim {
             entries.removeFirst(entries.count - maxEntries)
         }

@@ -4,6 +4,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(AppSettings.self) private var settings
     @Environment(UsageTracker.self) private var usage
+    @Environment(TranslationCoordinator.self) private var coordinator
 
     @State private var apiKeyDraft: String = ""
     @State private var apiKeyVisible: Bool = false
@@ -66,7 +67,12 @@ struct SettingsView: View {
             } header: {
                 Text("Languages")
             } footer: {
-                Text("Two simultaneous translation sessions run — one for each language. The model auto-detects who is speaking which.")
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Two simultaneous translation sessions run — one for each language. The model auto-detects who is speaking which.")
+                    if coordinator.status == .running || coordinator.status == .reconnecting {
+                        Text("A session is live — language changes take effect on the next session.")
+                    }
+                }
             }
 
             labelsSection

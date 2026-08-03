@@ -41,8 +41,15 @@ final class SessionStore {
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.prettyPrinted]
         let url = folderURL.appendingPathComponent("\(session.id.uuidString).json")
-        guard let data = try? encoder.encode(session) else { return }
-        try? data.write(to: url, options: [.atomic])
+        do {
+            let data = try encoder.encode(session)
+            try data.write(to: url, options: [.atomic])
+        } catch {
+            // A silently lost session is the worst failure mode for an
+            // archive — at least surface it in the diagnostics log.
+            diagLog(.error, tag: "Store", "Failed to save session \(session.id.uuidString): \(error.localizedDescription)")
+            return
+        }
         if let idx = sessions.firstIndex(where: { $0.id == session.id }) {
             sessions[idx] = session
         } else {

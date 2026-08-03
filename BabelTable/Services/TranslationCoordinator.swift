@@ -1,6 +1,7 @@
 import Foundation
 import NaturalLanguage
 import Observation
+import UIKit
 
 /// Orchestrates the live translation pipeline:
 ///   - One `AudioCaptureService` reading the mic at 24 kHz PCM16.
@@ -56,6 +57,40 @@ final class TranslationCoordinator {
     private var awaitingReconnect = false
     private static let maxReconnectAttempts = 3
 
+    /// Sockets that have reported `.ready` since the last (re)build. During a
+    /// reconnect we wait for *both* before going back to `.running`, so one
+    /// live socket doesn't make us drop audio meant for the other.
+    private var readyPanels: Set<Panel> = []
+
+    /// True after the app went to background mid-session. Without a
+    /// background-audio entitlement iOS kills capture and the sockets, so we
+    /// tear down cleanly and rebuild on return to the foreground.
+    private var suspendedForBackground = false
+
+    /// True while the system has interrupted capture (call/Siri). Separate
+    /// from `status` so a socket reconnect completing *during* an
+    /// interruption doesn't flip us back to `.running` with a dead mic.
+    private var audioInterrupted = false
+
+    /// Smoothed mic loudness 0…1 for the level meter; 0 when not capturing.
+    private(set) var micLevel: Float = 0
+
+    /// One-line "session saved · duration · cost" notice shown briefly after
+    /// a session is persisted. Nil when nothing to show.
+    private(set) var sessionSummary: String?
+
+    /// Stable id for the in-progress session. Drafts are persisted
+    /// incrementally (each finished turn, on backgrounding) so a crash or
+    /// kill loses at most the currently-open turn, and the final save
+    /// overwrites the draft.
+    private var draftSessionID: UUID?
+
+    /// Display caps so an hours-long session doesn't turn the transcript
+    /// panels into a single unbounded Text that re-layouts on every delta.
+    /// Full content is still archived via the per-line buffers.
+    private static let maxPanelChars = 4000
+    private static let maxInputChars = 2000
+
     private var sessionStartedAt: Date?
     private var primaryLines: [TranscriptLine] = []
     private var secondaryLines: [TranscriptLine] = []
@@ -82,6 +117,16 @@ final class TranslationCoordinator {
         self.settings = settings
         self.store = store
         self.usage = usage
+
+        audio.onLevel = { [weak self] level in
+            Task { @MainActor [weak self] in self?.micLevel = level }
+        }
+        audio.onInterruption = { [weak self] event in
+            Task { @MainActor [weak self] in self?.handleInterruption(event) }
+        }
+        audio.onMediaServicesReset = { [weak self] in
+            Task { @MainActor [weak self] in self?.handleMediaServicesReset() }
+        }
     }
 
     // MARK: - Public
@@ -126,6 +171,8 @@ final class TranslationCoordinator {
         drainingTurnTranslatedFromPanel = nil
         drainingTurnLastOutputAt = .distantPast
         openTurnLastInputAt = .distantPast
+        sessionSummary = nil
+        micLevel = 0
     }
 
     func start() async {
@@ -157,9 +204,20 @@ final class TranslationCoordinator {
         drainingTurnLastOutputAt = .distantPast
         reconnectAttempts = 0
         awaitingReconnect = false
+        suspendedForBackground = false
+        audioInterrupted = false
+        readyPanels = []
+        sessionSummary = nil
+        micLevel = 0
         sessionStartedAt = Date()
+        draftSessionID = UUID()
         primaryLanguageCode = settings.primaryLanguageCode
         secondaryLanguageCode = settings.secondaryLanguageCode
+
+        // This app is used lying on a table mid-conversation; the screen
+        // must not auto-lock while a session is live (that would suspend the
+        // app and kill capture). Cleared in finishSession().
+        UIApplication.shared.isIdleTimerDisabled = true
 
         buildAndConnectTranslators()
 
@@ -189,7 +247,48 @@ final class TranslationCoordinator {
             reconnectTask?.cancel()
             reconnectTask = nil
             awaitingReconnect = false
+            UIApplication.shared.isIdleTimerDisabled = false
             status = .error(TranslationError(raw: error.localizedDescription))
+        }
+    }
+
+    /// Called when the app goes to background mid-session. Without a
+    /// background-audio entitlement iOS suspends capture and kills the
+    /// sockets, so we tear down cleanly (persisting a draft) and resume when
+    /// the app returns — nothing the user said is lost.
+    func suspendForBackground() {
+        guard status == .running || status == .starting || status == .reconnecting else { return }
+        guard !suspendedForBackground else { return }
+        diagLog(.info, tag: "Coord", "Backgrounded; suspending session")
+        suspendedForBackground = true
+        // The interruption state is superseded — resume rebuilds the engine
+        // from scratch rather than continuing the interrupted one.
+        audioInterrupted = false
+        reconnectTask?.cancel()
+        reconnectTask = nil
+        awaitingReconnect = false
+        persistDraft()
+        tearDownConnections()
+        audio.stop()
+        micLevel = 0
+        status = .reconnecting
+    }
+
+    /// Called when the app returns to the foreground after
+    /// `suspendForBackground()`. Rebuilds the sockets and restarts capture;
+    /// status flips back to `.running` once both sockets report ready.
+    func resumeFromBackground() {
+        guard suspendedForBackground, status == .reconnecting else { return }
+        suspendedForBackground = false
+        diagLog(.info, tag: "Coord", "Foregrounded; resuming session")
+        buildAndConnectTranslators()
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            do {
+                try await self.audio.restart()
+            } catch {
+                self.failSession(TranslationError(raw: "Microphone restart failed: \(error.localizedDescription)"))
+            }
         }
     }
 
@@ -211,6 +310,9 @@ final class TranslationCoordinator {
     /// covers the flood during the backoff window.
     private func failSession(_ error: TranslationError) {
         guard status == .running || status == .starting || status == .reconnecting else { return }
+        // While backgrounded everything is already torn down and will be
+        // rebuilt on foregrounding — late errors from dying sockets are moot.
+        guard !suspendedForBackground else { return }
         // A reconnect is already queued — ignore follow-on errors from the
         // dying socket until that attempt resolves.
         guard !awaitingReconnect else { return }
@@ -269,8 +371,13 @@ final class TranslationCoordinator {
         reconnectTask = nil
         awaitingReconnect = false
         reconnectAttempts = 0
+        suspendedForBackground = false
+        audioInterrupted = false
+        readyPanels = []
+        UIApplication.shared.isIdleTimerDisabled = false
         audio.stop()
         tearDownConnections()
+        micLevel = 0
 
         // Finalize any pending turns in chronological order: draining first
         // (its input was already closed earlier), then the still-open turn.
@@ -286,15 +393,18 @@ final class TranslationCoordinator {
         }
 
         // Record usage for this session, regardless of whether transcripts arrived.
+        var elapsed: TimeInterval = 0
         if let startedAt = sessionStartedAt {
-            let elapsed = Date().timeIntervalSince(startedAt)
+            elapsed = Date().timeIntervalSince(startedAt)
             usage.recordSession(durationSeconds: elapsed)
         }
 
-        // Persist the session if there is anything to save.
+        // Persist the session if there is anything to save. Reuses the draft
+        // id so this overwrites the incrementally-saved draft in place.
         if let startedAt = sessionStartedAt,
            !primaryLines.isEmpty || !secondaryLines.isEmpty || !inputLines.isEmpty || !chatTurns.isEmpty {
             let session = ChatSession(
+                id: draftSessionID ?? UUID(),
                 startedAt: startedAt,
                 endedAt: Date(),
                 primaryLanguageCode: primaryLanguageCode,
@@ -304,9 +414,43 @@ final class TranslationCoordinator {
                 chatTurns: chatTurns
             )
             store.save(session)
+            showSessionSummary(elapsed: elapsed)
         }
 
         sessionStartedAt = nil
+        draftSessionID = nil
+    }
+
+    /// Brief on-screen confirmation that the conversation was archived,
+    /// including its estimated cost. Clears itself after a few seconds.
+    private func showSessionSummary(elapsed: TimeInterval) {
+        let cost = (elapsed / 60) * UsageTracker.pricePerMinute
+        let summary = String(format: "Session saved · %d:%02d · ≈ $%.2f",
+                             Int(elapsed) / 60, Int(elapsed) % 60, cost)
+        sessionSummary = summary
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(6))
+            guard let self, self.sessionSummary == summary else { return }
+            self.sessionSummary = nil
+        }
+    }
+
+    /// Incrementally persist the in-progress session so a crash, kill, or
+    /// backgrounding loses at most the currently-open turn. The final save in
+    /// `finishSession()` overwrites this draft (same id).
+    private func persistDraft() {
+        guard let startedAt = sessionStartedAt, let id = draftSessionID,
+           !primaryLines.isEmpty || !secondaryLines.isEmpty || !inputLines.isEmpty || !chatTurns.isEmpty else { return }
+        store.save(ChatSession(
+            id: id,
+            startedAt: startedAt,
+            endedAt: nil,
+            primaryLanguageCode: primaryLanguageCode,
+            secondaryLanguageCode: secondaryLanguageCode,
+            primaryLines: primaryLines,
+            secondaryLines: secondaryLines,
+            chatTurns: chatTurns
+        ))
     }
 
     // MARK: - Private
@@ -317,6 +461,9 @@ final class TranslationCoordinator {
     /// Used both on a fresh start and on reconnect; relies on
     /// `primaryLanguageCode`/`secondaryLanguageCode` already being set.
     private func buildAndConnectTranslators() {
+        // New sockets must both re-report ready before we count as live.
+        readyPanels = []
+
         let noiseReduction: RealtimeTranslator.NoiseReduction
         switch settings.micScenario {
         case .closeSingle: noiseReduction = .nearField
@@ -371,14 +518,63 @@ final class TranslationCoordinator {
         teardownTranslators()
     }
 
+    // MARK: - Audio system events
+
+    /// System audio interruption (phone call, Siri, …). The sockets stay
+    /// alive; only capture pauses. We reuse the `.reconnecting` status so the
+    /// UI shows the session as temporarily degraded rather than live.
+    private func handleInterruption(_ event: AudioCaptureService.InterruptionEvent) {
+        switch event {
+        case .began:
+            guard status == .running || status == .reconnecting else { return }
+            diagLog(.warn, tag: "Coord", "Audio interrupted; mic paused")
+            audioInterrupted = true
+            micLevel = 0
+            status = .reconnecting
+        case .resumed:
+            audioInterrupted = false
+            // If backgrounded or a socket reconnect is in flight, those paths
+            // own the transition back to `.running`.
+            guard status == .reconnecting, !awaitingReconnect, !suspendedForBackground else { return }
+            diagLog(.info, tag: "Coord", "Audio interruption ended; resuming")
+            status = .running
+        case .resumeFailed(let message):
+            audioInterrupted = false
+            guard status == .running || status == .reconnecting else { return }
+            failSession(TranslationError(raw: "Microphone restart failed: \(message)"))
+        }
+    }
+
+    /// Media services were reset: the entire audio stack (and likely the
+    /// sockets) is invalid. Rebuild both sides.
+    private func handleMediaServicesReset() {
+        guard status == .running || status == .starting || status == .reconnecting else { return }
+        guard !suspendedForBackground else { return }
+        diagLog(.warn, tag: "Coord", "Media services reset; rebuilding audio + sockets")
+        teardownTranslators()
+        status = .reconnecting
+        buildAndConnectTranslators()
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            do {
+                try await self.audio.restart()
+            } catch {
+                self.failSession(TranslationError(raw: "Microphone restart failed: \(error.localizedDescription)"))
+            }
+        }
+    }
+
     private func handle(event: RealtimeTranslator.Event, panel: Panel) {
         switch event {
         case .state(let s):
             switch s {
             case .ready:
-                // A socket came up. If we were reconnecting, we're live again.
-                if status == .reconnecting {
-                    diagLog(.info, tag: "Coord", "Reconnected (\(panel))")
+                readyPanels.insert(panel)
+                // Back to live only once *both* sockets are up and the mic
+                // isn't paused by a system interruption — otherwise audio
+                // meant for a dead channel is silently dropped.
+                if status == .reconnecting, readyPanels.count == 2, !audioInterrupted {
+                    diagLog(.info, tag: "Coord", "Reconnected (both panels ready)")
                     reconnectAttempts = 0
                     awaitingReconnect = false
                     reconnectTask?.cancel()
@@ -395,15 +591,24 @@ final class TranslationCoordinator {
             // copy to avoid duplicate lines.
             guard panel == .primary else { return }
             lastInputTranscript += delta
+            if lastInputTranscript.count > Self.maxInputChars {
+                lastInputTranscript = String(lastInputTranscript.suffix(Self.maxInputChars))
+            }
             appendDelta(delta, to: &inputLines, languageCode: "auto", kind: .input)
             updateChatTurnFromInput(delta: delta)
         case .outputDelta(let delta):
             switch panel {
             case .primary:
                 primaryTranscript += delta
+                if primaryTranscript.count > Self.maxPanelChars {
+                    primaryTranscript = String(primaryTranscript.suffix(Self.maxPanelChars))
+                }
                 appendDelta(delta, to: &primaryLines, languageCode: primaryLanguageCode, kind: .output)
             case .secondary:
                 secondaryTranscript += delta
+                if secondaryTranscript.count > Self.maxPanelChars {
+                    secondaryTranscript = String(secondaryTranscript.suffix(Self.maxPanelChars))
+                }
                 appendDelta(delta, to: &secondaryLines, languageCode: secondaryLanguageCode, kind: .output)
             }
             updateChatTurnFromOutput(delta: delta, panel: panel)
@@ -552,6 +757,7 @@ final class TranslationCoordinator {
     /// context-aware refinement of its translation (see `TranslationRefiner`).
     private func finalize(_ turn: ChatTurn) {
         chatTurns.append(turn)
+        persistDraft()
         scheduleRefinement(for: turn)
     }
 

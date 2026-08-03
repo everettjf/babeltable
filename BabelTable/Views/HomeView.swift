@@ -5,6 +5,7 @@ struct HomeView: View {
     @Environment(TranslationCoordinator.self) private var coordinator
     @Environment(\.horizontalSizeClass) private var hSizeClass
     @Environment(\.openURL) private var openURL
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var showingSettings = false
 
@@ -24,12 +25,33 @@ struct HomeView: View {
                     }
                 }
 
+                heardBar
+
                 Divider()
 
                 controlBar
                     .padding(.vertical, 12)
                     .background(.thinMaterial)
             }
+            .onChange(of: scenePhase) { _, phase in
+                switch phase {
+                case .background: coordinator.suspendForBackground()
+                case .active: coordinator.resumeFromBackground()
+                default: break
+                }
+            }
+            .overlay(alignment: .bottom) {
+                if let summary = coordinator.sessionSummary {
+                    Text(summary)
+                        .font(.caption.weight(.medium))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background(.ultraThinMaterial, in: .capsule)
+                        .padding(.bottom, 76)
+                        .transition(.opacity.combined(with: .move(edge: .bottom)))
+                }
+            }
+            .animation(.easeInOut(duration: 0.25), value: coordinator.sessionSummary)
             .navigationTitle("BabelTable")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -109,6 +131,25 @@ struct HomeView: View {
     }
 
     // MARK: - Layouts
+
+    /// One-line tail of the raw recognized speech (before translation), so a
+    /// wrong translation can be told apart from a mis-heard source. Only
+    /// shown in face-to-face mode; chat mode already shows source text per turn.
+    @ViewBuilder
+    private var heardBar: some View {
+        if settings.displayMode == .faceToFace,
+           coordinator.status == .running || coordinator.status == .reconnecting,
+           !coordinator.lastInputTranscript.isEmpty {
+            Text(String(coordinator.lastInputTranscript.suffix(140)))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .truncationMode(.head)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal)
+                .padding(.vertical, 4)
+        }
+    }
 
     /// Panel header: the speaker's name in speaker-label mode, else the
     /// language's native name.
@@ -199,11 +240,16 @@ struct HomeView: View {
     private var sideSlotWidth: CGFloat { isRegular ? 120 : 80 }
 
     private var statusDot: some View {
-        Circle()
-            .fill(statusColor)
-            .frame(width: 12, height: 12)
-            .frame(width: sideSlotWidth, alignment: .leading)
-            .padding(.leading)
+        HStack(spacing: 6) {
+            Circle()
+                .fill(statusColor)
+                .frame(width: 12, height: 12)
+            if coordinator.status == .running {
+                MicLevelMeter(level: coordinator.micLevel)
+            }
+        }
+        .frame(width: sideSlotWidth, alignment: .leading)
+        .padding(.leading)
     }
 
     private var statusColor: Color {
@@ -267,4 +313,23 @@ struct HomeView: View {
 
     private var actionButtonHPadding: CGFloat { isRegular ? 32 : 24 }
     private var actionButtonVPadding: CGFloat { isRegular ? 14 : 10 }
+}
+
+/// Tiny live mic-level bar next to the status dot — confirms at a glance
+/// that the mic is picking up speech (and roughly how loud).
+private struct MicLevelMeter: View {
+    let level: Float
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(.secondary.opacity(0.25))
+                Capsule()
+                    .fill(.green)
+                    .frame(width: geo.size.width * CGFloat(min(max(level, 0), 1)))
+            }
+        }
+        .frame(width: 40, height: 6)
+        .accessibilityLabel("Microphone level")
+    }
 }

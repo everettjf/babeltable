@@ -41,7 +41,13 @@ nonisolated final class RealtimeTranslator: @unchecked Sendable {
     private let session: URLSession
     private var task: URLSessionWebSocketTask?
     private var receiveLoop: Task<Void, Never>?
+    private var pingTimer: DispatchSourceTimer?
     private var sendQueue = DispatchQueue(label: "BabelTable.WSSend")
+
+    /// Heartbeat interval. A silently dead connection (NAT timeout, network
+    /// switch) is otherwise only noticed on the next failed send — which may
+    /// be minutes away when the user is just listening.
+    private static let pingInterval: TimeInterval = 25
 
     init(apiKey: String,
          targetLanguageCode: String,
@@ -95,10 +101,12 @@ nonisolated final class RealtimeTranslator: @unchecked Sendable {
         send(json: sessionUpdate)
 
         startReceiveLoop()
+        startPingTimer()
     }
 
     nonisolated func close() {
         diagLog(.info, tag: logTag, "Closing")
+        stopPingTimer()
         receiveLoop?.cancel()
         receiveLoop = nil
         // Best-effort: send session.close, then close the socket.
@@ -108,31 +116,65 @@ nonisolated final class RealtimeTranslator: @unchecked Sendable {
         onEvent(.state(.closed))
     }
 
-    /// Send a PCM16 24kHz mono audio chunk.
+    /// Send a PCM16 24kHz mono audio chunk. Hops off the real-time audio
+    /// thread before base64-encoding (~10 chunks/sec per socket) so encoding
+    /// cost never causes capture dropouts.
     nonisolated func appendAudio(_ pcm16Data: Data) {
-        let b64 = pcm16Data.base64EncodedString()
-        send(json: [
-            "type": "session.input_audio_buffer.append",
-            "audio": b64,
-        ])
+        sendQueue.async { [weak self] in
+            guard let self else { return }
+            let b64 = pcm16Data.base64EncodedString()
+            self.sendOnQueue(json: [
+                "type": "session.input_audio_buffer.append",
+                "audio": b64,
+            ])
+        }
     }
 
     // MARK: - Internals
 
     nonisolated private func send(json: [String: Any]) {
+        sendQueue.async { [weak self] in
+            self?.sendOnQueue(json: json)
+        }
+    }
+
+    /// Must already be running on `sendQueue`.
+    nonisolated private func sendOnQueue(json: [String: Any]) {
         guard let task else { return }
         guard let data = try? JSONSerialization.data(withJSONObject: json) else { return }
         guard let str = String(data: data, encoding: .utf8) else { return }
-        sendQueue.async { [logTag] in
-            task.send(.string(str)) { [weak self] error in
-                guard let error else { return }
-                // Suppress URL-cancelled errors from intentional close().
-                if Self.isCancellationError(error) { return }
-                let ns = error as NSError
-                diagLog(.error, tag: logTag, "Send failed: \(error.localizedDescription) (domain=\(ns.domain), code=\(ns.code))")
-                self?.onEvent(.error(message: "Send failed: \(error.localizedDescription)", code: nil))
+        task.send(.string(str)) { [weak self] error in
+            guard let self, let error else { return }
+            // Suppress URL-cancelled errors from intentional close().
+            if Self.isCancellationError(error) { return }
+            let ns = error as NSError
+            diagLog(.error, tag: self.logTag, "Send failed: \(error.localizedDescription) (domain=\(ns.domain), code=\(ns.code))")
+            self.onEvent(.error(message: "Send failed: \(error.localizedDescription)", code: nil))
+        }
+    }
+
+    nonisolated private func startPingTimer() {
+        stopPingTimer()
+        let timer = DispatchSource.makeTimerSource(queue: sendQueue)
+        timer.schedule(deadline: .now() + Self.pingInterval, repeating: Self.pingInterval)
+        timer.setEventHandler { [weak self] in
+            guard let self, let task = self.task else { return }
+            task.sendPing { [weak self] error in
+                guard let self, let error else { return }
+                // A ping we can't even send means the socket is silently dead
+                // (NAT timeout etc.) — surface it so the coordinator reconnects
+                // instead of sitting "Live" on a dead connection.
+                diagLog(.error, tag: self.logTag, "Ping failed: \(error.localizedDescription)")
+                self.onEvent(.state(.failed("Ping failed: \(error.localizedDescription)")))
             }
         }
+        pingTimer = timer
+        timer.resume()
+    }
+
+    nonisolated private func stopPingTimer() {
+        pingTimer?.cancel()
+        pingTimer = nil
     }
 
     nonisolated private static func isCancellationError(_ error: Error) -> Bool {

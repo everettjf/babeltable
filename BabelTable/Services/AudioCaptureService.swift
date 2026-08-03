@@ -39,13 +39,39 @@ nonisolated final class AudioCaptureService: @unchecked Sendable {
         }
     }
 
+    /// Interruption lifecycle reported to the coordinator. `began`: the system
+    /// paused capture (call, Siri…). `resumed`: the engine restarted
+    /// successfully. `resumeFailed`: the restart attempt threw.
+    enum InterruptionEvent: Sendable {
+        case began
+        case resumed
+        case resumeFailed(String)
+    }
+
     private let engine = AVAudioEngine()
     private let converterQueue = DispatchQueue(label: "BabelTable.AudioConverter", qos: .userInitiated)
     private var converter: AVAudioConverter?
     private var targetFormat: AVAudioFormat?
 
+    /// Mode of the last `start(mode:)` — reused by `restart()`.
+    private var activeMode: CaptureMode = .voiceChat
+    private var observersInstalled = false
+
+    /// Smallest interval between `onLevel` callbacks (~10 Hz).
+    private static let levelInterval: TimeInterval = 0.1
+    private var lastLevelSentAt: Date = .distantPast
+
     /// Set by caller. Receives PCM16 24kHz mono little-endian audio data.
     var onChunk: (@Sendable (Data) -> Void)?
+
+    /// Mic loudness 0…1 at ~10 Hz while capturing; drives the level meter.
+    var onLevel: (@Sendable (Float) -> Void)?
+
+    /// System audio interruptions (phone call, Siri, …).
+    var onInterruption: (@Sendable (InterruptionEvent) -> Void)?
+
+    /// Media services were reset — the whole audio stack must be rebuilt.
+    var onMediaServicesReset: (@Sendable () -> Void)?
 
     /// Requests record permission. Returns true if granted.
     static func requestPermission() async -> Bool {
@@ -57,6 +83,7 @@ nonisolated final class AudioCaptureService: @unchecked Sendable {
     }
 
     nonisolated func start(mode: CaptureMode = .voiceChat) async throws {
+        activeMode = mode
         let granted = await Self.requestPermission()
         guard granted else { throw AudioError.permissionDenied }
 
@@ -99,6 +126,15 @@ nonisolated final class AudioCaptureService: @unchecked Sendable {
 
         engine.prepare()
         try engine.start()
+        installObservers()
+    }
+
+    /// Full stop + start using the mode of the last `start(mode:)` call.
+    /// Used to recover from interruptions, media-services resets, and
+    /// returning from the background.
+    nonisolated func restart() async throws {
+        stop()
+        try await start(mode: activeMode)
     }
 
     nonisolated func stop() {
@@ -110,6 +146,7 @@ nonisolated final class AudioCaptureService: @unchecked Sendable {
     }
 
     nonisolated private func handle(buffer: AVAudioPCMBuffer) {
+        emitLevel(for: buffer)
         guard let converter, let targetFormat else { return }
 
         // Compute output capacity for the target format.
@@ -144,5 +181,86 @@ nonisolated final class AudioCaptureService: @unchecked Sendable {
         let byteCount = Int(outBuffer.frameLength) * MemoryLayout<Int16>.size
         let data = Data(bytes: int16ChannelData[0], count: byteCount)
         onChunk?(data)
+    }
+
+    // MARK: - Level metering
+
+    /// RMS of the source buffer, mapped from -50 dB … -12 dB to 0…1 — the
+    /// practical speech range for a mic lying on a table. Throttled to ~10 Hz.
+    nonisolated private func emitLevel(for buffer: AVAudioPCMBuffer) {
+        let now = Date()
+        guard now.timeIntervalSince(lastLevelSentAt) >= Self.levelInterval,
+              let channelData = buffer.floatChannelData else { return }
+        let frames = Int(buffer.frameLength)
+        guard frames > 0 else { return }
+        lastLevelSentAt = now
+
+        let samples = channelData[0]
+        var sum: Float = 0
+        for i in 0..<frames { sum += samples[i] * samples[i] }
+        let rms = sqrt(sum / Float(frames))
+        let db = 20 * log10(max(rms, 1e-6))
+        let normalized = min(max((db + 50) / 38, 0), 1)
+        onLevel?(normalized)
+    }
+
+    // MARK: - System audio events
+
+    nonisolated private func installObservers() {
+        guard !observersInstalled else { return }
+        observersInstalled = true
+        let center = NotificationCenter.default
+        center.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: nil) { [weak self] note in
+            self?.handleInterruption(note)
+        }
+        center.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: nil) { [weak self] _ in
+            self?.handleRouteChange()
+        }
+        center.addObserver(forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: nil) { [weak self] _ in
+            guard let self else { return }
+            diagLog(.warn, tag: "Audio", "Media services reset")
+            self.onMediaServicesReset?()
+        }
+    }
+
+    nonisolated private func handleInterruption(_ note: Notification) {
+        guard let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: raw) else { return }
+        switch type {
+        case .began:
+            diagLog(.warn, tag: "Audio", "Interruption began (call/Siri)")
+            engine.stop()
+            onInterruption?(.began)
+        case .ended:
+            let options = AVAudioSession.InterruptionOptions(
+                rawValue: note.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0)
+            guard options.contains(.shouldResume) else {
+                diagLog(.warn, tag: "Audio", "Interruption ended, resume declined")
+                onInterruption?(.resumeFailed("System declined audio resume"))
+                return
+            }
+            Task {
+                do {
+                    try await self.restart()
+                    self.onInterruption?(.resumed)
+                } catch {
+                    self.onInterruption?(.resumeFailed(error.localizedDescription))
+                }
+            }
+        @unknown default:
+            break
+        }
+    }
+
+    /// Route changes (headset (un)plugged, …) can change the input hardware
+    /// format; rebuild the converter against the new format, otherwise
+    /// conversion errors are silently swallowed and audio goes quiet.
+    nonisolated private func handleRouteChange() {
+        guard engine.isRunning, let targetFormat else { return }
+        let nativeFormat = engine.inputNode.outputFormat(forBus: 0)
+        guard nativeFormat.sampleRate > 0,
+              let newConverter = AVAudioConverter(from: nativeFormat, to: targetFormat) else { return }
+        converter = newConverter
+        diagLog(.info, tag: "Audio", "Route changed; converter rebuilt (\(Int(nativeFormat.sampleRate)) Hz)")
     }
 }

@@ -9,6 +9,10 @@ struct ChatView: View {
     @Environment(TranslationCoordinator.self) private var coordinator
     @Environment(\.horizontalSizeClass) private var hSizeClass
 
+    /// Only auto-scroll on new content while the user is already at the
+    /// bottom — yanking the view away mid-read is worse than not following.
+    @State private var isNearBottom = true
+
     /// Cap chat column width on iPad / wide layouts so bubbles stay readable
     /// instead of spanning a 1024pt+ screen.
     private var contentMaxWidth: CGFloat {
@@ -61,6 +65,11 @@ struct ChatView: View {
                 .frame(maxWidth: contentMaxWidth)
                 .frame(maxWidth: .infinity)
             }
+            .onScrollGeometryChange(for: Bool.self) { geo in
+                geo.contentOffset.y + geo.containerSize.height >= geo.contentSize.height - 80
+            } action: { _, nearBottom in
+                isNearBottom = nearBottom
+            }
             .onChange(of: coordinator.chatTurns.count) { _, _ in
                 scrollToBottom(proxy)
             }
@@ -77,6 +86,7 @@ struct ChatView: View {
     }
 
     private func scrollToBottom(_ proxy: ScrollViewProxy) {
+        guard isNearBottom else { return }
         withAnimation(.easeOut(duration: 0.15)) {
             if coordinator.openTurn != nil {
                 proxy.scrollTo("open", anchor: .bottom)

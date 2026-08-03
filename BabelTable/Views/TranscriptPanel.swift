@@ -9,6 +9,10 @@ struct TranscriptPanel: View {
 
     @Environment(\.horizontalSizeClass) private var hSizeClass
 
+    /// Only auto-scroll on new content while the user is already at the
+    /// bottom — yanking the view away mid-read is worse than not following.
+    @State private var isNearBottom = true
+
     private var isRegular: Bool { hSizeClass == .regular }
 
     /// Larger transcript body text on iPad / regular size class so two people
@@ -55,12 +59,19 @@ struct TranscriptPanel: View {
                             .font(transcriptFont)
                             .foregroundStyle(text.isEmpty ? .secondary : .primary)
                             .frame(maxWidth: .infinity, alignment: .leading)
+                            .textSelection(.enabled)
                             .id("transcript")
                     }
                     .padding(.horizontal)
                     .padding(.bottom, 16)
                 }
+                .onScrollGeometryChange(for: Bool.self) { geo in
+                    geo.contentOffset.y + geo.containerSize.height >= geo.contentSize.height - 80
+                } action: { _, nearBottom in
+                    isNearBottom = nearBottom
+                }
                 .onChange(of: text) { _, _ in
+                    guard isNearBottom else { return }
                     withAnimation(.easeOut(duration: 0.15)) {
                         proxy.scrollTo("transcript", anchor: .bottom)
                     }
