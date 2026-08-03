@@ -55,6 +55,7 @@ struct OnboardingView: View {
         OnboardingPage(
             icon: "bubble.left.and.bubble.right.fill",
             iconColor: .green,
+            showAppIcon: true,
             title: "Welcome to BabelTable",
             subtitle: "Real-time speech translation\nbetween two people."
         ) {
@@ -283,6 +284,8 @@ struct OnboardingView: View {
 private struct OnboardingPage<Content: View>: View {
     let icon: String
     let iconColor: Color
+    /// Show the real app icon as the hero instead of an SF Symbol.
+    var showAppIcon: Bool = false
     let title: String
     let subtitle: String
     @ViewBuilder var content: () -> Content
@@ -290,10 +293,20 @@ private struct OnboardingPage<Content: View>: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                Image(systemName: icon)
-                    .font(.system(size: 64, weight: .semibold))
-                    .foregroundStyle(iconColor)
-                    .padding(.top, 32)
+                if showAppIcon {
+                    Image("AppIconDisplay")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 96, height: 96)
+                        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                        .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+                        .padding(.top, 32)
+                } else {
+                    Image(systemName: icon)
+                        .font(.system(size: 64, weight: .semibold))
+                        .foregroundStyle(iconColor)
+                        .padding(.top, 32)
+                }
 
                 VStack(spacing: 8) {
                     Text(title)

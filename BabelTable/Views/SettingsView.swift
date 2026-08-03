@@ -106,6 +106,22 @@ struct SettingsView: View {
             }
 
             Section {
+                HStack(spacing: 12) {
+                    Image("AppIconDisplay")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 44, height: 44)
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("BabelTable")
+                            .font(.headline)
+                        Text(versionString)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.vertical, 2)
+
                 LabeledContent("Model", value: "gpt-realtime-translate")
                 LabeledContent("Sample rate", value: "24 kHz PCM16")
                 LabeledContent("List price", value: priceString(UsageTracker.pricePerMinute) + " / min")
@@ -278,6 +294,13 @@ struct SettingsView: View {
         f.minimumFractionDigits = (amount < 1 ? 3 : 2)
         f.maximumFractionDigits = (amount < 1 ? 3 : 2)
         return f.string(from: NSNumber(value: amount)) ?? "$\(amount)"
+    }
+
+    private var versionString: String {
+        let info = Bundle.main.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String ?? "—"
+        let build = info?["CFBundleVersion"] as? String ?? "—"
+        return "Version \(version) (\(build))"
     }
 }
 
