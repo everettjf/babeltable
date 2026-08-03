@@ -1,11 +1,11 @@
 <div align="center">
 
-# SpeakTwo
+# BabelTable
 
 **Real-time, two-way speech translation for face-to-face conversations.**
 
 Put your phone on the table between two people and let them talk in their own
-languages — SpeakTwo transcribes and translates both sides live, powered by
+languages — BabelTable transcribes and translates both sides live, powered by
 OpenAI's `gpt-realtime-translate`.
 
 [![Platform](https://img.shields.io/badge/platform-iOS%2026%2B-blue.svg)](https://www.apple.com/ios/)
@@ -13,23 +13,23 @@ OpenAI's `gpt-realtime-translate`.
 [![UI](https://img.shields.io/badge/UI-SwiftUI-brightgreen.svg)](https://developer.apple.com/xcode/swiftui/)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)](LICENSE)
 
-**[🌐 Visit the website →](https://xnu.app/SpeakTwo/)**
+**[🌐 Visit the website →](https://xnu.app/BabelTable/)**
 
 </div>
 
 <div align="center">
-  <img src="app-store-screenshots/SpeakTwo-01.png" width="30%" alt="Face-to-face mode" />
+  <img src="app-store-screenshots/BabelTable-01.png" width="30%" alt="Face-to-face mode" />
   &nbsp;
-  <img src="app-store-screenshots/SpeakTwo-02.png" width="30%" alt="Side-by-side chat mode" />
+  <img src="app-store-screenshots/BabelTable-02.png" width="30%" alt="Side-by-side chat mode" />
   &nbsp;
-  <img src="app-store-screenshots/SpeakTwo-03.png" width="30%" alt="Settings" />
+  <img src="app-store-screenshots/BabelTable-03.png" width="30%" alt="Settings" />
 </div>
 
 ---
 
 ## What it is
 
-SpeakTwo is a [BYOK](#byok--cost) (Bring Your Own Key) iOS app for live,
+BabelTable is a [BYOK](#byok--cost) (Bring Your Own Key) iOS app for live,
 in-person interpreting. Two people pick their languages once, hit **Start**, and
 talk naturally. The app auto-detects who's speaking which language and streams
 the translation as they go — no turn-taking, no buttons to pass back and forth.
@@ -78,15 +78,15 @@ Translation output supports the 13 languages offered by `gpt-realtime-translate`
 ## Getting started
 
 ```bash
-git clone https://github.com/everettjf/SpeakTwo.git
-cd SpeakTwo
-open SpeakTwo.xcodeproj
+git clone https://github.com/everettjf/BabelTable.git
+cd BabelTable
+open BabelTable.xcodeproj
 ```
 
 Then in Xcode:
 
 1. Select your team under **Signing & Capabilities** (the bundle identifier is
-   `com.xnu.speaktwo` — change it to your own).
+   `com.xnu.babeltable` — change it to your own).
 2. Build and run on a **physical device** — the iOS Simulator cannot capture
    microphone audio.
 3. On first launch, open **Settings** and paste your OpenAI API key (stored in
@@ -95,7 +95,7 @@ Then in Xcode:
 
 ## BYOK & cost
 
-SpeakTwo has no subscription and no backend. You bring your own OpenAI API key
+BabelTable has no subscription and no backend. You bring your own OpenAI API key
 and pay OpenAI directly for realtime audio usage. Because translation runs as
 two concurrent realtime sessions, expect roughly double the per-minute audio
 cost of a single session. The app tracks usage locally so you can keep an eye on it.
@@ -105,7 +105,7 @@ cost of a single session. The app tracks usage locally so you can keep an eye on
 A small, dependency-free SwiftUI app:
 
 ```
-SpeakTwo/
+BabelTable/
 ├── Models/        Language, AppSettings, ChatSession, KeychainStore, TranslationError
 ├── Views/         Home, Chat, Transcript, Settings, Archive, Onboarding, Diagnostics
 └── Services/
@@ -128,8 +128,8 @@ Unit tests cover error classification and reconnect backoff:
 
 ```bash
 xcodebuild test \
-  -project SpeakTwo.xcodeproj \
-  -scheme SpeakTwo \
+  -project BabelTable.xcodeproj \
+  -scheme BabelTable \
   -destination 'platform=iOS Simulator,name=iPhone 16'
 ```
 
@@ -145,14 +145,14 @@ export APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"   # appleid.apple.com → App
 
 ## Privacy
 
-SpeakTwo collects no personal data through any developer-operated server. Your
+BabelTable collects no personal data through any developer-operated server. Your
 API key stays in the Keychain, audio goes directly to OpenAI, and transcripts
 are saved only on your device. Full policy: [PRIVACY.md](PRIVACY.md).
 
 ## Contributing
 
 Issues and pull requests are welcome. For bugs or feature ideas, please
-[open an issue](https://github.com/everettjf/SpeakTwo/issues).
+[open an issue](https://github.com/everettjf/BabelTable/issues).
 
 ## License
 

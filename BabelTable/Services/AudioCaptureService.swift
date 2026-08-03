@@ -40,7 +40,7 @@ nonisolated final class AudioCaptureService: @unchecked Sendable {
     }
 
     private let engine = AVAudioEngine()
-    private let converterQueue = DispatchQueue(label: "SpeakTwo.AudioConverter", qos: .userInitiated)
+    private let converterQueue = DispatchQueue(label: "BabelTable.AudioConverter", qos: .userInitiated)
     private var converter: AVAudioConverter?
     private var targetFormat: AVAudioFormat?
 

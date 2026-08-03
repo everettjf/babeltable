@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct SpeakTwoApp: App {
+struct BabelTableApp: App {
     @State private var settings = AppSettings()
     @State private var store = SessionStore()
     @State private var usage = UsageTracker()

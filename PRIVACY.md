@@ -1,16 +1,16 @@
-# SpeakTwo Privacy Policy
+# BabelTable Privacy Policy
 
 Last updated: May 31, 2026
 
-SpeakTwo is a bring-your-own-key real-time translation app.
+BabelTable is a bring-your-own-key real-time translation app.
 
 ## Data We Collect
 
-SpeakTwo does not collect, sell, or share personal data through a developer-operated server.
+BabelTable does not collect, sell, or share personal data through a developer-operated server.
 
 ## OpenAI API Key
 
-Your OpenAI API key is stored locally on your device in the iOS Keychain. SpeakTwo does not send your API key to any server controlled by the developer.
+Your OpenAI API key is stored locally on your device in the iOS Keychain. BabelTable does not send your API key to any server controlled by the developer.
 
 ## Speech and Translation
 
@@ -24,4 +24,4 @@ Conversation transcripts may be saved locally on your device so you can review p
 
 For privacy questions or support, open an issue at:
 
-https://github.com/everettjf/SpeakTwo/issues
+https://github.com/everettjf/BabelTable/issues

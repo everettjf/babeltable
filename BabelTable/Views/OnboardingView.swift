@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// First-launch onboarding. Walks the user through:
-/// 1. What SpeakTwo does
+/// 1. What BabelTable does
 /// 2. The BYOK / pricing reality of using OpenAI directly
 /// 3. Pasting an API key (with a link to OpenAI's dashboard)
 /// 4. Choosing primary and secondary languages
@@ -55,7 +55,7 @@ struct OnboardingView: View {
         OnboardingPage(
             icon: "bubble.left.and.bubble.right.fill",
             iconColor: .green,
-            title: "Welcome to SpeakTwo",
+            title: "Welcome to BabelTable",
             subtitle: "Real-time speech translation\nbetween two people."
         ) {
             VStack(alignment: .leading, spacing: 20) {
@@ -88,20 +88,20 @@ struct OnboardingView: View {
             icon: "dollarsign.circle.fill",
             iconColor: .orange,
             title: "Bring Your Own Key",
-            subtitle: "SpeakTwo runs on OpenAI's\ngpt-realtime-translate model."
+            subtitle: "BabelTable runs on OpenAI's\ngpt-realtime-translate model."
         ) {
             VStack(alignment: .leading, spacing: 16) {
                 InfoBox(
                     icon: "creditcard.fill",
                     color: .orange,
                     title: "Pricing",
-                    message: "About **$0.07 per minute** of conversation. We run two parallel translation sessions (one per language) so live audio is billed twice — that's the OpenAI list price, not a SpeakTwo markup."
+                    message: "About **$0.07 per minute** of conversation. We run two parallel translation sessions (one per language) so live audio is billed twice — that's the OpenAI list price, not a BabelTable markup."
                 )
                 InfoBox(
                     icon: "lock.shield.fill",
                     color: .green,
                     title: "Your key, your device",
-                    message: "Your API key is stored only on this device in the iOS Keychain. SpeakTwo has no backend and never sees your traffic."
+                    message: "Your API key is stored only on this device in the iOS Keychain. BabelTable has no backend and never sees your traffic."
                 )
             }
             .padding(.horizontal, 24)

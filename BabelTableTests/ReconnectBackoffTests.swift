@@ -1,5 +1,5 @@
 import XCTest
-@testable import SpeakTwo
+@testable import BabelTable
 
 /// Covers the backoff schedule the auto-reconnect feature uses to decide how
 /// long to wait before rebuilding the sockets after a transient failure.

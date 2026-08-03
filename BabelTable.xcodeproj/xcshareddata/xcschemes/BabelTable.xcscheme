@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "5A6A79A92FADB2AF00E4C880"
-               BuildableName = "SpeakTwo.app"
-               BlueprintName = "SpeakTwo"
-               ReferencedContainer = "container:SpeakTwo.xcodeproj">
+               BuildableName = "BabelTable.app"
+               BlueprintName = "BabelTable"
+               ReferencedContainer = "container:BabelTable.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "5A6A7A012FADB2AF00E4C880"
-               BuildableName = "SpeakTwoTests.xctest"
-               BlueprintName = "SpeakTwoTests"
-               ReferencedContainer = "container:SpeakTwo.xcodeproj">
+               BuildableName = "BabelTableTests.xctest"
+               BlueprintName = "BabelTableTests"
+               ReferencedContainer = "container:BabelTable.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "5A6A79A92FADB2AF00E4C880"
-            BuildableName = "SpeakTwo.app"
-            BlueprintName = "SpeakTwo"
-            ReferencedContainer = "container:SpeakTwo.xcodeproj">
+            BuildableName = "BabelTable.app"
+            BlueprintName = "BabelTable"
+            ReferencedContainer = "container:BabelTable.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "5A6A79A92FADB2AF00E4C880"
-            BuildableName = "SpeakTwo.app"
-            BlueprintName = "SpeakTwo"
-            ReferencedContainer = "container:SpeakTwo.xcodeproj">
+            BuildableName = "BabelTable.app"
+            BlueprintName = "BabelTable"
+            ReferencedContainer = "container:BabelTable.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

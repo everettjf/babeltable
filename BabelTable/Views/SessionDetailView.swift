@@ -82,7 +82,7 @@ struct SessionDetailView: View {
         let stampFormatter = DateFormatter()
         stampFormatter.dateFormat = "yyyy-MM-dd-HHmm"
         let stamp = stampFormatter.string(from: session.startedAt)
-        let filename = "SpeakTwo-\(stamp).txt"
+        let filename = "BabelTable-\(stamp).txt"
         let url = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(filename)
         try? content.write(to: url, atomically: true, encoding: .utf8)
         return url
@@ -103,7 +103,7 @@ struct SessionDetailView: View {
             ?? session.secondaryLanguageCode
 
         var lines: [String] = []
-        lines.append("SpeakTwo Conversation")
+        lines.append("BabelTable Conversation")
         lines.append("")
         lines.append("Started:   \(dateFmt.string(from: session.startedAt))")
         if let ended = session.endedAt {

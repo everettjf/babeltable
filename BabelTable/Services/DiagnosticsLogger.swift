@@ -40,7 +40,7 @@ final class DiagnosticsLogger {
 
     private let maxEntries = 500
     private let fileURL: URL
-    private let writeQueue = DispatchQueue(label: "SpeakTwo.Diag.write", qos: .utility)
+    private let writeQueue = DispatchQueue(label: "BabelTable.Diag.write", qos: .utility)
 
     private init() {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!

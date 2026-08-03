@@ -13,7 +13,7 @@ final class UsageTracker {
     static let pricePerMinutePerSession: Double = 0.034
     static let parallelSessions: Int = 2
 
-    /// Per-minute cost for a typical SpeakTwo conversation (USD).
+    /// Per-minute cost for a typical BabelTable conversation (USD).
     static var pricePerMinute: Double {
         pricePerMinutePerSession * Double(parallelSessions)
     }

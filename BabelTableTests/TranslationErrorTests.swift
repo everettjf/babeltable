@@ -1,5 +1,5 @@
 import XCTest
-@testable import SpeakTwo
+@testable import BabelTable
 
 /// Covers the recently-added error classification that the home-screen alert,
 /// the auto-reconnect decision, and the diagnostics log all depend on.

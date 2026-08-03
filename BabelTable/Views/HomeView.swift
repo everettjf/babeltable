@@ -30,7 +30,7 @@ struct HomeView: View {
                     .padding(.vertical, 12)
                     .background(.thinMaterial)
             }
-            .navigationTitle("SpeakTwo")
+            .navigationTitle("BabelTable")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {

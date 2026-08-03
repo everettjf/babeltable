@@ -7,19 +7,19 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		5A6A79AA2FADB2AF00E4C880 /* SpeakTwo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SpeakTwo.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		5A6A7A022FADB2AF00E4C880 /* SpeakTwoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SpeakTwoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5A6A79AA2FADB2AF00E4C880 /* BabelTable.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BabelTable.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5A6A7A022FADB2AF00E4C880 /* BabelTableTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BabelTableTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		5A6A79AC2FADB2AF00E4C880 /* SpeakTwo */ = {
+		5A6A79AC2FADB2AF00E4C880 /* BabelTable */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = SpeakTwo;
+			path = BabelTable;
 			sourceTree = "<group>";
 		};
-		5A6A7A092FADB2AF00E4C880 /* SpeakTwoTests */ = {
+		5A6A7A092FADB2AF00E4C880 /* BabelTableTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = SpeakTwoTests;
+			path = BabelTableTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -45,8 +45,8 @@
 		5A6A79A12FADB2AF00E4C880 = {
 			isa = PBXGroup;
 			children = (
-				5A6A79AC2FADB2AF00E4C880 /* SpeakTwo */,
-				5A6A7A092FADB2AF00E4C880 /* SpeakTwoTests */,
+				5A6A79AC2FADB2AF00E4C880 /* BabelTable */,
+				5A6A7A092FADB2AF00E4C880 /* BabelTableTests */,
 				5A6A79AB2FADB2AF00E4C880 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -54,8 +54,8 @@
 		5A6A79AB2FADB2AF00E4C880 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				5A6A79AA2FADB2AF00E4C880 /* SpeakTwo.app */,
-				5A6A7A022FADB2AF00E4C880 /* SpeakTwoTests.xctest */,
+				5A6A79AA2FADB2AF00E4C880 /* BabelTable.app */,
+				5A6A7A022FADB2AF00E4C880 /* BabelTableTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -68,14 +68,14 @@
 			containerPortal = 5A6A79A22FADB2AF00E4C880 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 5A6A79A92FADB2AF00E4C880;
-			remoteInfo = SpeakTwo;
+			remoteInfo = BabelTable;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXNativeTarget section */
-		5A6A79A92FADB2AF00E4C880 /* SpeakTwo */ = {
+		5A6A79A92FADB2AF00E4C880 /* BabelTable */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5A6A79CB2FADB2B100E4C880 /* Build configuration list for PBXNativeTarget "SpeakTwo" */;
+			buildConfigurationList = 5A6A79CB2FADB2B100E4C880 /* Build configuration list for PBXNativeTarget "BabelTable" */;
 			buildPhases = (
 				5A6A79A62FADB2AF00E4C880 /* Sources */,
 				5A6A79A72FADB2AF00E4C880 /* Frameworks */,
@@ -86,18 +86,18 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				5A6A79AC2FADB2AF00E4C880 /* SpeakTwo */,
+				5A6A79AC2FADB2AF00E4C880 /* BabelTable */,
 			);
-			name = SpeakTwo;
+			name = BabelTable;
 			packageProductDependencies = (
 			);
-			productName = SpeakTwo;
-			productReference = 5A6A79AA2FADB2AF00E4C880 /* SpeakTwo.app */;
+			productName = BabelTable;
+			productReference = 5A6A79AA2FADB2AF00E4C880 /* BabelTable.app */;
 			productType = "com.apple.product-type.application";
 		};
-		5A6A7A012FADB2AF00E4C880 /* SpeakTwoTests */ = {
+		5A6A7A012FADB2AF00E4C880 /* BabelTableTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5A6A7A062FADB2AF00E4C880 /* Build configuration list for PBXNativeTarget "SpeakTwoTests" */;
+			buildConfigurationList = 5A6A7A062FADB2AF00E4C880 /* Build configuration list for PBXNativeTarget "BabelTableTests" */;
 			buildPhases = (
 				5A6A7A032FADB2AF00E4C880 /* Sources */,
 				5A6A7A042FADB2AF00E4C880 /* Frameworks */,
@@ -109,13 +109,13 @@
 				5A6A7A0A2FADB2AF00E4C880 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				5A6A7A092FADB2AF00E4C880 /* SpeakTwoTests */,
+				5A6A7A092FADB2AF00E4C880 /* BabelTableTests */,
 			);
-			name = SpeakTwoTests;
+			name = BabelTableTests;
 			packageProductDependencies = (
 			);
-			productName = SpeakTwoTests;
-			productReference = 5A6A7A022FADB2AF00E4C880 /* SpeakTwoTests.xctest */;
+			productName = BabelTableTests;
+			productReference = 5A6A7A022FADB2AF00E4C880 /* BabelTableTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
@@ -137,7 +137,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 5A6A79A52FADB2AF00E4C880 /* Build configuration list for PBXProject "SpeakTwo" */;
+			buildConfigurationList = 5A6A79A52FADB2AF00E4C880 /* Build configuration list for PBXProject "BabelTable" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -151,8 +151,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				5A6A79A92FADB2AF00E4C880 /* SpeakTwo */,
-				5A6A7A012FADB2AF00E4C880 /* SpeakTwoTests */,
+				5A6A79A92FADB2AF00E4C880 /* BabelTable */,
+				5A6A7A012FADB2AF00E4C880 /* BabelTableTests */,
 			);
 		};
 /* End PBXProject section */
@@ -194,7 +194,7 @@
 /* Begin PBXTargetDependency section */
 		5A6A7A0A2FADB2AF00E4C880 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 5A6A79A92FADB2AF00E4C880 /* SpeakTwo */;
+			target = 5A6A79A92FADB2AF00E4C880 /* BabelTable */;
 			targetProxy = 5A6A7A0B2FADB2AF00E4C880 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -331,9 +331,9 @@
 				DEVELOPMENT_TEAM = YPV49M8592;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = SpeakTwo;
+				INFOPLIST_KEY_CFBundleDisplayName = BabelTable;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "SpeakTwo needs the microphone to capture speech for live translation.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "BabelTable needs the microphone to capture speech for live translation.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -345,7 +345,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.xnu.speaktwo;
+				PRODUCT_BUNDLE_IDENTIFIER = com.xnu.babeltable;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -367,9 +367,9 @@
 				DEVELOPMENT_TEAM = YPV49M8592;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = SpeakTwo;
+				INFOPLIST_KEY_CFBundleDisplayName = BabelTable;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "SpeakTwo needs the microphone to capture speech for live translation.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "BabelTable needs the microphone to capture speech for live translation.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -381,7 +381,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.xnu.speaktwo;
+				PRODUCT_BUNDLE_IDENTIFIER = com.xnu.babeltable;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -403,12 +403,12 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.xnu.speaktwo.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.xnu.babeltable.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SpeakTwo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SpeakTwo";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BabelTable.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BabelTable";
 			};
 			name = Debug;
 		};
@@ -422,19 +422,19 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.xnu.speaktwo.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.xnu.babeltable.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SpeakTwo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SpeakTwo";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BabelTable.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BabelTable";
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		5A6A79A52FADB2AF00E4C880 /* Build configuration list for PBXProject "SpeakTwo" */ = {
+		5A6A79A52FADB2AF00E4C880 /* Build configuration list for PBXProject "BabelTable" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5A6A79C92FADB2B100E4C880 /* Debug */,
@@ -443,7 +443,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		5A6A79CB2FADB2B100E4C880 /* Build configuration list for PBXNativeTarget "SpeakTwo" */ = {
+		5A6A79CB2FADB2B100E4C880 /* Build configuration list for PBXNativeTarget "BabelTable" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5A6A79CC2FADB2B100E4C880 /* Debug */,
@@ -452,7 +452,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		5A6A7A062FADB2AF00E4C880 /* Build configuration list for PBXNativeTarget "SpeakTwoTests" */ = {
+		5A6A7A062FADB2AF00E4C880 /* Build configuration list for PBXNativeTarget "BabelTableTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5A6A7A072FADB2AF00E4C880 /* Debug */,

@@ -50,7 +50,7 @@ struct TranslationError: Equatable, Sendable {
             recoveryTitle = "Open billing"
         case .auth:
             title = "Check your API key"
-            message = "SpeakTwo couldn't sign in to OpenAI. Open Settings and make sure your API key is entered correctly and is still active."
+            message = "BabelTable couldn't sign in to OpenAI. Open Settings and make sure your API key is entered correctly and is still active."
             recovery = .openSettings
             recoveryTitle = "Open Settings"
         case .rateLimit:
@@ -65,7 +65,7 @@ struct TranslationError: Equatable, Sendable {
             recoveryTitle = nil
         case .microphone:
             title = "Microphone unavailable"
-            message = "SpeakTwo couldn't start the microphone. Check that microphone access is allowed in your device Settings, then tap Start to try again."
+            message = "BabelTable couldn't start the microphone. Check that microphone access is allowed in your device Settings, then tap Start to try again."
             recovery = .none
             recoveryTitle = nil
         case .unknown:

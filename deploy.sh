@@ -8,8 +8,8 @@
 #   ./deploy.sh
 #
 # Optional overrides:
-#   PROJECT          (default: SpeakTwo.xcodeproj)
-#   SCHEME           (default: SpeakTwo)
+#   PROJECT          (default: BabelTable.xcodeproj)
+#   SCHEME           (default: BabelTable)
 #   CONFIGURATION    (default: Release)
 #   TEAM_ID          (default: YPV49M8592)
 #
@@ -17,8 +17,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-PROJECT="${PROJECT:-SpeakTwo.xcodeproj}"
-SCHEME="${SCHEME:-SpeakTwo}"
+PROJECT="${PROJECT:-BabelTable.xcodeproj}"
+SCHEME="${SCHEME:-BabelTable}"
 CONFIGURATION="${CONFIGURATION:-Release}"
 TEAM_ID="${TEAM_ID:-YPV49M8592}"
 
