@@ -8,6 +8,7 @@ struct HomeView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     @State private var showingSettings = false
+    @State private var showingArchive = false
 
     private var isRegular: Bool { hSizeClass == .regular }
 
@@ -57,15 +58,11 @@ struct HomeView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
-                        toggleDisplayMode()
+                        showingArchive = true
                     } label: {
-                        Image(systemName: settings.displayMode == .faceToFace
-                              ? "bubble.left.and.bubble.right"
-                              : "rectangle.split.1x2")
+                        Image(systemName: "clock.arrow.circlepath")
                     }
-                    .accessibilityLabel(settings.displayMode == .faceToFace
-                                        ? "Switch to chat layout"
-                                        : "Switch to face-to-face layout")
+                    .accessibilityLabel("History")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -83,6 +80,9 @@ struct HomeView: View {
                         Image(systemName: "gearshape")
                     }
                 }
+            }
+            .sheet(isPresented: $showingArchive) {
+                ArchiveView()
             }
             .sheet(isPresented: $showingSettings) {
                 NavigationStack {
@@ -194,10 +194,6 @@ struct HomeView: View {
     }
 
     // MARK: - Control bar
-
-    private func toggleDisplayMode() {
-        settings.displayMode = settings.displayMode == .faceToFace ? .chat : .faceToFace
-    }
 
     private var currentError: TranslationError? {
         if case let .error(error) = coordinator.status {

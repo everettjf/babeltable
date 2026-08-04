@@ -9,6 +9,8 @@ struct SettingsView: View {
     @State private var apiKeyDraft: String = ""
     @State private var apiKeyVisible: Bool = false
     @State private var saved = false
+    @State private var isTestingKey = false
+    @State private var keyTestError: String?
     @State private var showOnboarding = false
     @State private var confirmResetUsage = false
 
@@ -31,16 +33,21 @@ struct SettingsView: View {
                 HStack {
                     Toggle("Show key", isOn: $apiKeyVisible)
                     Spacer()
+                    if isTestingKey {
+                        ProgressView()
+                            .controlSize(.small)
+                    }
                     Button(saved ? "Saved" : "Save") {
-                        settings.apiKey = apiKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines)
-                        saved = true
-                        Task { @MainActor in
-                            try? await Task.sleep(for: .seconds(1.5))
-                            saved = false
-                        }
+                        saveKeyAfterTest()
                     }
                     .buttonStyle(.borderedProminent)
-                    .disabled(apiKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(apiKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isTestingKey)
+                }
+
+                if let keyTestError {
+                    Label(keyTestError, systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.red)
                 }
 
                 Link(destination: URL(string: "https://platform.openai.com/api-keys")!) {
@@ -50,7 +57,7 @@ struct SettingsView: View {
             } header: {
                 Text("OpenAI API Key")
             } footer: {
-                Text("Stored securely in the iOS Keychain on this device.")
+                Text("Tested against OpenAI before saving, then stored securely in the iOS Keychain on this device.")
             }
 
             Section {
@@ -76,6 +83,8 @@ struct SettingsView: View {
             }
 
             labelsSection
+
+            layoutSection
 
             refinementSection
 
@@ -130,7 +139,11 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Settings")
-        .onAppear { apiKeyDraft = settings.apiKey }
+        .onAppear {
+            apiKeyDraft = settings.apiKey
+            keyTestError = nil
+        }
+        .onChange(of: apiKeyDraft) { keyTestError = nil }
         .fullScreenCover(isPresented: $showOnboarding) {
             OnboardingView()
         }
@@ -169,6 +182,25 @@ struct SettingsView: View {
             Text(settings.speakerLabelStyle == .speaker
                  ? "Each utterance is tagged with who spoke it."
                  : "Each utterance is tagged with its language and flag.")
+        }
+    }
+
+    // MARK: - Layout
+
+    @ViewBuilder
+    private var layoutSection: some View {
+        @Bindable var settings = settings
+
+        Section {
+            Picker("Layout", selection: $settings.displayMode) {
+                ForEach(DisplayMode.allCases, id: \.self) { mode in
+                    Text(mode.displayName).tag(mode)
+                }
+            }
+        } header: {
+            Text("Display")
+        } footer: {
+            Text("Face-to-face rotates the top panel for the person sitting across the table. Same screen shows one chat-style list for both of you.")
         }
     }
 
@@ -284,6 +316,29 @@ struct SettingsView: View {
             Text("Usage")
         } footer: {
             Text("Estimated from session duration at the OpenAI list price (\(priceString(UsageTracker.pricePerMinute)) / min). OpenAI's official billing dashboard is authoritative.")
+        }
+    }
+
+    /// Saves the key only after a successful connection test against OpenAI.
+    private func saveKeyAfterTest() {
+        let key = apiKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        isTestingKey = true
+        keyTestError = nil
+        Task { @MainActor in
+            switch await APIKeyValidator.validate(key) {
+            case .valid:
+                settings.apiKey = key
+                saved = true
+                isTestingKey = false
+                try? await Task.sleep(for: .seconds(1.5))
+                saved = false
+            case .invalid:
+                keyTestError = "OpenAI rejected this key. Check for typos, or create a new one from the dashboard."
+                isTestingKey = false
+            case .unreachable(let detail):
+                keyTestError = "Could not reach OpenAI to verify the key (\(detail)). Check your connection and try again."
+                isTestingKey = false
+            }
         }
     }
 

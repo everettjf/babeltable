@@ -11,6 +11,8 @@ struct OnboardingView: View {
 
     @State private var step: Int = 0
     @State private var keyDraft: String = ""
+    @State private var isTestingKey = false
+    @State private var keyTestError: String?
 
     private let totalSteps = 4
 
@@ -140,6 +142,7 @@ struct OnboardingView: View {
                         .autocorrectionDisabled()
                         .padding(14)
                         .background(.regularMaterial, in: .rect(cornerRadius: 12))
+                        .onChange(of: keyDraft) { keyTestError = nil }
                     HStack {
                         Button {
                             if let s = UIPasteboard.general.string {
@@ -152,6 +155,12 @@ struct OnboardingView: View {
                         .buttonStyle(.bordered)
                         .controlSize(.small)
                         Spacer()
+                    }
+                    if let keyTestError {
+                        Label(keyTestError, systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
@@ -250,14 +259,14 @@ struct OnboardingView: View {
         switch step {
         case 0: "Continue"
         case 1: "Next: add your key"
-        case 2: "Save and continue"
+        case 2: isTestingKey ? "Testing connection…" : "Test connection & continue"
         default: "Start translating"
         }
     }
 
     private var primaryActionEnabled: Bool {
         switch step {
-        case 2: !keyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case 2: !keyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isTestingKey
         default: true
         }
     }
@@ -265,16 +274,32 @@ struct OnboardingView: View {
     private func advance() {
         switch step {
         case 2:
-            settings.apiKey = keyDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+            // The key is only saved after a successful connection test.
+            let key = keyDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+            isTestingKey = true
+            keyTestError = nil
+            Task { @MainActor in
+                switch await APIKeyValidator.validate(key) {
+                case .valid:
+                    settings.apiKey = key
+                    isTestingKey = false
+                    withAnimation(.easeInOut(duration: 0.3)) { step += 1 }
+                case .invalid:
+                    keyTestError = "OpenAI rejected this key. Check for typos, or create a new one from the dashboard."
+                    isTestingKey = false
+                case .unreachable(let detail):
+                    keyTestError = "Could not reach OpenAI to verify the key (\(detail)). Check your connection and try again."
+                    isTestingKey = false
+                }
+            }
         case totalSteps - 1:
             settings.hasCompletedOnboarding = true
             dismiss()
             return
         default:
-            break
-        }
-        withAnimation(.easeInOut(duration: 0.3)) {
-            step = min(step + 1, totalSteps - 1)
+            withAnimation(.easeInOut(duration: 0.3)) {
+                step = min(step + 1, totalSteps - 1)
+            }
         }
     }
 }

@@ -6,6 +6,13 @@ enum DisplayMode: String, Codable, Sendable, CaseIterable {
     case faceToFace
     /// Single chronological chat list — both readers sit side by side.
     case chat
+
+    var displayName: String {
+        switch self {
+        case .faceToFace: return "Face-to-face (across the table)"
+        case .chat: return "Same screen (chat style)"
+        }
+    }
 }
 
 /// Where the microphone sits relative to speakers.
@@ -169,6 +176,11 @@ final class AppSettings {
         didSet { defaults.set(glossaryText, forKey: Keys.glossaryText) }
     }
 
+    /// Backing store for `hasAPIKey`. The Keychain-backed `apiKey` computed
+    /// property cannot be tracked by Observation, so views key off this
+    /// stored property instead — it updates whenever the key is set.
+    private(set) var hasAPIKey: Bool
+
     var apiKey: String {
         get { KeychainStore.shared.apiKey ?? "" }
         set {
@@ -177,14 +189,15 @@ final class AppSettings {
             } else {
                 KeychainStore.shared.apiKey = newValue
             }
+            hasAPIKey = !newValue.isEmpty
         }
     }
 
     init() {
         self.primaryLanguageCode = defaults.string(forKey: Keys.primaryLanguage) ?? "en"
         self.secondaryLanguageCode = defaults.string(forKey: Keys.secondaryLanguage) ?? "zh"
-        let modeRaw = defaults.string(forKey: Keys.displayMode) ?? DisplayMode.faceToFace.rawValue
-        self.displayMode = DisplayMode(rawValue: modeRaw) ?? .faceToFace
+        let modeRaw = defaults.string(forKey: Keys.displayMode) ?? DisplayMode.chat.rawValue
+        self.displayMode = DisplayMode(rawValue: modeRaw) ?? .chat
         self.hasCompletedOnboarding = defaults.bool(forKey: Keys.hasCompletedOnboarding)
 
         let scenarioRaw = defaults.string(forKey: Keys.micScenario) ?? MicScenario.desktopTwo.rawValue
@@ -204,6 +217,7 @@ final class AppSettings {
         let formalityRaw = defaults.string(forKey: Keys.formality) ?? Formality.auto.rawValue
         self.formality = Formality(rawValue: formalityRaw) ?? .auto
         self.glossaryText = defaults.string(forKey: Keys.glossaryText) ?? ""
+        self.hasAPIKey = !(KeychainStore.shared.apiKey ?? "").isEmpty
     }
 
     var primaryLanguage: Language {
@@ -213,8 +227,6 @@ final class AppSettings {
     var secondaryLanguage: Language {
         SupportedLanguages.byCode(secondaryLanguageCode) ?? SupportedLanguages.outputs[1]
     }
-
-    var hasAPIKey: Bool { !apiKey.isEmpty }
 
     /// Parsed glossary rules: (source, target) pairs from `glossaryText`.
     /// Accepts "a => b" or "a = b"; blank and malformed lines are skipped.

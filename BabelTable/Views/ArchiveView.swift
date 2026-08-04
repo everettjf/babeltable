@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ArchiveView: View {
     @Environment(SessionStore.self) private var store
+    @Environment(\.dismiss) private var dismiss
 
     @State private var selection: ChatSession?
 
@@ -33,8 +34,16 @@ struct ArchiveView: View {
                 }
             }
         }
-        .navigationTitle("Archive")
+        .navigationTitle("History")
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                }
+                .accessibilityLabel("Close history")
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     store.reload()

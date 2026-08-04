@@ -41,7 +41,7 @@ struct BabelTableApp: App {
     ///     installed onto a new device where the Keychain item is missing).
     private var needsOnboarding: Binding<Bool> {
         Binding(
-            get: { !settings.hasCompletedOnboarding || settings.apiKey.isEmpty },
+            get: { !settings.hasCompletedOnboarding || !settings.hasAPIKey },
             set: { newValue in
                 if !newValue { settings.hasCompletedOnboarding = true }
             }
