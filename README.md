@@ -157,3 +157,7 @@ Issues and pull requests are welcome. For bugs or feature ideas, please
 ## License
 
 Released under the [MIT License](LICENSE).
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=everettjf/babeltable&type=Date)](https://star-history.com/#everettjf/babeltable&Date)
