@@ -48,6 +48,32 @@ nonisolated final class AudioCaptureService: @unchecked Sendable {
         case resumeFailed(String)
     }
 
+    enum InterruptionDecision: Equatable, Sendable {
+        case pause
+        case restart
+        case fail(String)
+        case ignore
+    }
+
+    /// Converts the untyped AVAudioSession notification payload into a small,
+    /// deterministic state-machine input that can be unit tested without audio
+    /// hardware or a running AVAudioSession.
+    static func interruptionDecision(typeRaw: UInt?, optionsRaw: UInt?) -> InterruptionDecision {
+        guard let typeRaw,
+              let type = AVAudioSession.InterruptionType(rawValue: typeRaw) else { return .ignore }
+        switch type {
+        case .began:
+            return .pause
+        case .ended:
+            let options = AVAudioSession.InterruptionOptions(rawValue: optionsRaw ?? 0)
+            return options.contains(.shouldResume)
+                ? .restart
+                : .fail("System declined audio resume")
+        @unknown default:
+            return .ignore
+        }
+    }
+
     private let engine = AVAudioEngine()
     private let converterQueue = DispatchQueue(label: "BabelTable.AudioConverter", qos: .userInitiated)
     private var converter: AVAudioConverter?
@@ -224,21 +250,16 @@ nonisolated final class AudioCaptureService: @unchecked Sendable {
     }
 
     nonisolated private func handleInterruption(_ note: Notification) {
-        guard let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
-              let type = AVAudioSession.InterruptionType(rawValue: raw) else { return }
-        switch type {
-        case .began:
+        let decision = Self.interruptionDecision(
+            typeRaw: note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
+            optionsRaw: note.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt
+        )
+        switch decision {
+        case .pause:
             diagLog(.warn, tag: "Audio", "Interruption began (call/Siri)")
             engine.stop()
             onInterruption?(.began)
-        case .ended:
-            let options = AVAudioSession.InterruptionOptions(
-                rawValue: note.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0)
-            guard options.contains(.shouldResume) else {
-                diagLog(.warn, tag: "Audio", "Interruption ended, resume declined")
-                onInterruption?(.resumeFailed("System declined audio resume"))
-                return
-            }
+        case .restart:
             Task {
                 do {
                     try await self.restart()
@@ -247,8 +268,11 @@ nonisolated final class AudioCaptureService: @unchecked Sendable {
                     self.onInterruption?(.resumeFailed(error.localizedDescription))
                 }
             }
-        @unknown default:
-            break
+        case .fail(let message):
+            diagLog(.warn, tag: "Audio", "Interruption ended, resume declined")
+            onInterruption?(.resumeFailed(message))
+        case .ignore:
+            return
         }
     }
 

@@ -211,8 +211,12 @@ final class TranslationCoordinator {
         micLevel = 0
         sessionStartedAt = Date()
         draftSessionID = UUID()
-        primaryLanguageCode = settings.primaryLanguageCode
-        secondaryLanguageCode = settings.secondaryLanguageCode
+        let sessionLanguages = SessionLanguagePair(
+            primary: settings.primaryLanguageCode,
+            secondary: settings.secondaryLanguageCode
+        )
+        primaryLanguageCode = sessionLanguages.primary
+        secondaryLanguageCode = sessionLanguages.secondary
 
         // This app is used lying on a table mid-conversation; the screen
         // must not auto-lock while a session is live (that would suspend the
@@ -317,7 +321,10 @@ final class TranslationCoordinator {
         // dying socket until that attempt resolves.
         guard !awaitingReconnect else { return }
 
-        if error.isRecoverable, reconnectAttempts < Self.maxReconnectAttempts {
+        if case .retry = Self.reconnectDecision(
+            afterCompletedAttempts: reconnectAttempts,
+            error: error
+        ) {
             scheduleReconnect(error)
             return
         }
@@ -362,6 +369,23 @@ final class TranslationCoordinator {
         if kind == .rateLimit { return 5 }
         // Connection drops: 1s, 2s, 4s … capped at 8s.
         return min(pow(2.0, Double(attempt - 1)), 8)
+    }
+
+    enum ReconnectDecision: Equatable {
+        case retry(attempt: Int, delay: TimeInterval)
+        case fail
+    }
+
+    static func reconnectDecision(
+        afterCompletedAttempts attempts: Int,
+        error: TranslationError
+    ) -> ReconnectDecision {
+        guard error.isRecoverable, attempts < maxReconnectAttempts else { return .fail }
+        let nextAttempt = attempts + 1
+        return .retry(
+            attempt: nextAttempt,
+            delay: backoffDelay(forAttempt: nextAttempt, kind: error.kind)
+        )
     }
 
     /// Stop audio, close sockets, finalize pending turns, record usage, and

@@ -66,3 +66,16 @@ enum SupportedLanguages {
         resolve(code)?.name ?? normalize(code)
     }
 }
+
+/// Immutable language configuration captured when a live session starts.
+/// Settings may change while a session is running, but its two WebSockets and
+/// archived transcript must keep the original pair until the next session.
+struct SessionLanguagePair: Equatable, Sendable {
+    let primary: String
+    let secondary: String
+
+    init(primary: String, secondary: String) {
+        self.primary = SupportedLanguages.resolve(primary)?.code ?? SupportedLanguages.outputs[0].code
+        self.secondary = SupportedLanguages.resolve(secondary)?.code ?? SupportedLanguages.outputs[1].code
+    }
+}
