@@ -14,7 +14,7 @@ import Observation
 final class DiagnosticsLogger {
     static let shared = DiagnosticsLogger()
 
-    struct Entry: Identifiable, Codable, Sendable {
+    nonisolated struct Entry: Identifiable, Codable, Sendable {
         var id: UUID = UUID()
         let timestamp: Date
         let level: Level
@@ -22,7 +22,7 @@ final class DiagnosticsLogger {
         let message: String
     }
 
-    enum Level: String, Codable, Sendable, CaseIterable {
+    nonisolated enum Level: String, Codable, Sendable, CaseIterable {
         case info
         case warn
         case error

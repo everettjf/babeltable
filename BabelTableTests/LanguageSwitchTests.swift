@@ -1,7 +1,7 @@
 import XCTest
 @testable import BabelTable
 
-final class LanguageSwitchTests: XCTestCase {
+@MainActor final class LanguageSwitchTests: XCTestCase {
     func testLiveSessionKeepsCapturedLanguagePair() {
         var configuredPrimary = "en"
         var configuredSecondary = "zh"

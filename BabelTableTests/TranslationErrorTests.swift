@@ -3,7 +3,7 @@ import XCTest
 
 /// Covers the recently-added error classification that the home-screen alert,
 /// the auto-reconnect decision, and the diagnostics log all depend on.
-final class TranslationErrorTests: XCTestCase {
+@MainActor final class TranslationErrorTests: XCTestCase {
 
     // MARK: - Classification by structured server code (preferred path)
 

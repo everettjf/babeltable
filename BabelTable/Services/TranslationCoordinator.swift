@@ -23,6 +23,16 @@ final class TranslationCoordinator {
 
     private(set) var status: Status = .idle
 
+    private(set) var networkCondition: ConnectivityMonitor.Condition = .online
+
+    var degradationMessage: String? {
+        switch networkCondition {
+        case .offline: "Offline — conversation is paused and the draft is saved."
+        case .constrained: "Weak network — realtime translation continues without optional refinement."
+        case .online: nil
+        }
+    }
+
     /// Streaming text for the panel showing translations *into* primary language.
     /// The user reading this panel sees what the other speaker said in their own language.
     private(set) var primaryTranscript: String = ""
@@ -44,6 +54,7 @@ final class TranslationCoordinator {
     private let usage: UsageTracker
 
     private let audio = AudioCaptureService()
+    private let connectivity = ConnectivityMonitor()
     private let refiner = TranslationRefiner()
     private var primaryTranslator: RealtimeTranslator?
     private var secondaryTranslator: RealtimeTranslator?
@@ -127,6 +138,10 @@ final class TranslationCoordinator {
         audio.onMediaServicesReset = { [weak self] in
             Task { @MainActor [weak self] in self?.handleMediaServicesReset() }
         }
+        connectivity.onChange = { [weak self] condition in
+            Task { @MainActor [weak self] in self?.handleConnectivity(condition) }
+        }
+        connectivity.start()
     }
 
     // MARK: - Public
@@ -146,6 +161,21 @@ final class TranslationCoordinator {
             || !secondaryLines.isEmpty
             || !primaryTranscript.isEmpty
             || !secondaryTranscript.isEmpty
+    }
+
+    /// Snapshot suitable for Messages, AirDrop, Notes, or a live meeting chat.
+    /// It includes in-flight turns, so sharing never requires ending a session.
+    var liveCaptionText: String {
+        let turns = chatTurns + [drainingTurn, openTurn].compactMap { $0 }
+        let body = turns.map { turn in
+            let source = turn.sourceText.trimmingCharacters(in: .whitespacesAndNewlines)
+            let translation = turn.bestTranslation.trimmingCharacters(in: .whitespacesAndNewlines)
+            let time = turn.startedAt.formatted(date: .omitted, time: .standard)
+            return ["[\(time)] \(source)", translation.isEmpty ? nil : "→ \(translation)"]
+                .compactMap { $0 }
+                .joined(separator: "\n")
+        }.joined(separator: "\n\n")
+        return "BabelTable Live Captions\n\n\(body)"
     }
 
     /// Stop any running session (which saves it to the archive), then clear
@@ -179,6 +209,11 @@ final class TranslationCoordinator {
         // A previous error should not block restarting.
         if case .error = status { status = .idle }
         guard status != .running, status != .starting else { return }
+
+        guard networkCondition != .offline else {
+            status = .error(TranslationError(raw: "You are offline. BabelTable will be ready when the network returns."))
+            return
+        }
 
         guard !settings.apiKey.isEmpty else {
             status = .error(TranslationError(raw: "Add your OpenAI API key in Settings."))
@@ -588,6 +623,40 @@ final class TranslationCoordinator {
         }
     }
 
+    private func handleConnectivity(_ condition: ConnectivityMonitor.Condition) {
+        guard condition != networkCondition else { return }
+        let previous = networkCondition
+        networkCondition = condition
+
+        switch condition {
+        case .offline:
+            guard status == .running || status == .starting || status == .reconnecting else { return }
+            diagLog(.warn, tag: "Network", "Offline; pausing and preserving draft")
+            persistDraft()
+            reconnectTask?.cancel()
+            reconnectTask = nil
+            awaitingReconnect = true
+            tearDownConnections()
+            audio.stop()
+            micLevel = 0
+            status = .reconnecting
+        case .constrained, .online:
+            guard previous == .offline, status == .reconnecting, sessionStartedAt != nil,
+                  !suspendedForBackground else { return }
+            diagLog(.info, tag: "Network", "Connectivity restored; resuming realtime session")
+            awaitingReconnect = false
+            buildAndConnectTranslators()
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                do {
+                    try await self.audio.restart()
+                } catch {
+                    self.failSession(TranslationError(raw: "Microphone restart failed: \(error.localizedDescription)"))
+                }
+            }
+        }
+    }
+
     private func handle(event: RealtimeTranslator.Event, panel: Panel) {
         switch event {
         case .state(let s):
@@ -786,7 +855,7 @@ final class TranslationCoordinator {
     }
 
     private func scheduleRefinement(for turn: ChatTurn) {
-        guard settings.refineEnabled else { return }
+        guard settings.refineEnabled, networkCondition == .online else { return }
         let source = turn.sourceText.trimmingCharacters(in: .whitespacesAndNewlines)
         let draft = turn.translatedText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !source.isEmpty, !draft.isEmpty, !turn.translatedLanguageCode.isEmpty else { return }

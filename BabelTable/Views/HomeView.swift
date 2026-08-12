@@ -65,6 +65,16 @@ struct HomeView: View {
                     .accessibilityLabel("History")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
+                    ShareLink(
+                        item: coordinator.liveCaptionText,
+                        subject: Text("BabelTable Live Captions")
+                    ) {
+                        Image(systemName: "captions.bubble")
+                    }
+                    .accessibilityLabel("Share live captions")
+                    .disabled(!coordinator.hasContent)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         coordinator.newConversation()
                     } label: {
@@ -79,6 +89,18 @@ struct HomeView: View {
                     } label: {
                         Image(systemName: "gearshape")
                     }
+                }
+            }
+            .safeAreaInset(edge: .top, spacing: 0) {
+                if let message = coordinator.degradationMessage {
+                    Label(message, systemImage: coordinator.networkCondition == .offline
+                          ? "wifi.slash" : "network.badge.shield.half.filled")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(coordinator.networkCondition == .offline ? .orange : .secondary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .background(.thinMaterial)
                 }
             }
             .sheet(isPresented: $showingArchive) {
