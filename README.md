@@ -2,6 +2,8 @@
 
 # BabelTable
 
+Repository: <https://github.com/everettjf/babeltable>
+
 **Real-time, two-way speech translation for face-to-face conversations.**
 
 Put your phone on the table between two people and let them talk in their own
