@@ -7,14 +7,21 @@ import Observation
 final class SessionStore {
     private(set) var sessions: [ChatSession] = []
 
-    private let folderURL: URL = {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let url = docs.appendingPathComponent("Sessions", isDirectory: true)
-        try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-        return url
-    }()
+    private let folderURL: URL
 
-    init() {
+    private static func defaultFolderURL() -> URL {
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        return docs.appendingPathComponent("Sessions", isDirectory: true)
+    }
+
+    /// `folderURL` is injectable so persistence can be verified against an
+    /// isolated temporary directory without touching the user's real archive.
+    init(folderURL: URL? = nil) {
+        self.folderURL = folderURL ?? Self.defaultFolderURL()
+        try? FileManager.default.createDirectory(
+            at: self.folderURL,
+            withIntermediateDirectories: true
+        )
         reload()
     }
 
@@ -59,7 +66,14 @@ final class SessionStore {
 
     func delete(_ session: ChatSession) {
         let url = folderURL.appendingPathComponent("\(session.id.uuidString).json")
-        try? FileManager.default.removeItem(at: url)
+        do {
+            if FileManager.default.fileExists(atPath: url.path) {
+                try FileManager.default.removeItem(at: url)
+            }
+        } catch {
+            diagLog(.error, tag: "Store", "Failed to delete session \(session.id.uuidString): \(error.localizedDescription)")
+            return
+        }
         sessions.removeAll { $0.id == session.id }
     }
 }
