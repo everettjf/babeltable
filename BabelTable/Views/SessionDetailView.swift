@@ -4,199 +4,181 @@ struct SessionDetailView: View {
     let session: ChatSession
 
     var body: some View {
-        List {
-            Section {
-                LabeledContent("Started", value: session.startedAt.formatted(date: .abbreviated, time: .standard))
-                if let ended = session.endedAt {
-                    LabeledContent("Ended", value: ended.formatted(date: .abbreviated, time: .standard))
-                }
-                LabeledContent("Duration", value: session.durationDescription)
-                LabeledContent("Languages", value: "\(SupportedLanguages.label(forCode: session.primaryLanguageCode)) ⇄ \(SupportedLanguages.label(forCode: session.secondaryLanguageCode))")
-            } header: {
-                Text("Session")
-            }
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 16) {
+                summaryCard
 
-            if let chatTurns = session.chatTurns, !chatTurns.isEmpty {
-                Section {
-                    ForEach(chatTurns) { turn in
-                        chatTurnRow(turn)
+                if let turns = session.chatTurns, !turns.isEmpty {
+                    SectionHeading(title: "Conversation", subtitle: "\(turns.count) translated turns")
+                    ForEach(turns) { turn in
+                        ArchivedTurnCard(turn: turn, session: session)
                     }
-                } header: {
-                    Text("Conversation")
-                }
-            }
-
-            Section {
-                if session.primaryLines.isEmpty {
-                    Text("No transcript")
-                        .foregroundStyle(.secondary)
                 } else {
-                    ForEach(session.primaryLines) { line in
-                        transcriptRow(line)
-                    }
+                    legacyTranscript
                 }
-            } header: {
-                Text(SupportedLanguages.byCode(session.primaryLanguageCode)?.nativeName
-                     ?? session.primaryLanguageCode)
             }
-
-            Section {
-                if session.secondaryLines.isEmpty {
-                    Text("No transcript")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(session.secondaryLines) { line in
-                        transcriptRow(line)
-                    }
-                }
-            } header: {
-                Text(SupportedLanguages.byCode(session.secondaryLanguageCode)?.nativeName
-                     ?? session.secondaryLanguageCode)
-            }
+            .frame(maxWidth: 760)
+            .padding(BabelTheme.pagePadding)
+            .frame(maxWidth: .infinity)
         }
-        .navigationTitle(session.displayTitle)
+        .background(BabelTheme.pageBackground)
+        .navigationTitle(session.startedAt.formatted(date: .abbreviated, time: .shortened))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                ShareLink(
-                    item: shareFileURL(),
-                    subject: Text(session.displayTitle),
-                    preview: SharePreview(
-                        session.displayTitle,
-                        icon: Image(systemName: "doc.text")
-                    )
-                ) {
+                ShareLink(item: transcriptText, subject: Text("BabelTable Conversation")) {
                     Image(systemName: "square.and.arrow.up")
                 }
+                .accessibilityLabel("Share conversation as text")
             }
         }
     }
 
-    // MARK: - Share
-
-    /// Writes the conversation as a UTF-8 .txt file in the temp directory and
-    /// returns its URL for the share sheet. Recomputed on each body eval; the
-    /// system periodically cleans the temp dir so this is safe.
-    private func shareFileURL() -> URL {
-        let content = buildTranscriptText()
-        let stampFormatter = DateFormatter()
-        stampFormatter.dateFormat = "yyyy-MM-dd-HHmm"
-        let stamp = stampFormatter.string(from: session.startedAt)
-        let filename = "BabelTable-\(stamp).txt"
-        let url = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(filename)
-        try? content.write(to: url, atomically: true, encoding: .utf8)
-        return url
+    private var summaryCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(session.startedAt.formatted(date: .complete, time: .omitted))
+                        .font(.headline)
+                    Text(session.startedAt.formatted(date: .omitted, time: .standard))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Label(session.durationDescription, systemImage: "clock.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(BabelTheme.primary)
+            }
+            HStack(spacing: 7) {
+                LanguagePill(languageCode: session.primaryLanguageCode,
+                             title: languageName(session.primaryLanguageCode), tint: BabelTheme.local)
+                Image(systemName: "arrow.left.arrow.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .accessibilityHidden(true)
+                LanguagePill(languageCode: session.secondaryLanguageCode,
+                             title: languageName(session.secondaryLanguageCode), tint: BabelTheme.remote)
+            }
+            Text("Saved privately on this device")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .babelCard(tint: BabelTheme.primary)
+        .accessibilityElement(children: .combine)
     }
 
-    private func buildTranscriptText() -> String {
-        let dateFmt = DateFormatter()
-        dateFmt.dateStyle = .medium
-        dateFmt.timeStyle = .short
+    @ViewBuilder
+    private var legacyTranscript: some View {
+        SectionHeading(title: "Transcript", subtitle: "Saved by language in an earlier BabelTable version")
+        LegacyTranscriptCard(title: languageName(session.primaryLanguageCode), lines: session.primaryLines, tint: BabelTheme.local)
+        LegacyTranscriptCard(title: languageName(session.secondaryLanguageCode), lines: session.secondaryLines, tint: BabelTheme.remote)
+    }
 
-        let timeFmt = DateFormatter()
-        timeFmt.dateStyle = .none
-        timeFmt.timeStyle = .medium
+    private func languageName(_ code: String) -> String {
+        SupportedLanguages.byCode(code)?.nativeName ?? code.uppercased()
+    }
 
-        let primaryName = SupportedLanguages.byCode(session.primaryLanguageCode)?.nativeName
-            ?? session.primaryLanguageCode
-        let secondaryName = SupportedLanguages.byCode(session.secondaryLanguageCode)?.nativeName
-            ?? session.secondaryLanguageCode
-
-        var lines: [String] = []
-        lines.append("BabelTable Conversation")
-        lines.append("")
-        lines.append("Started:   \(dateFmt.string(from: session.startedAt))")
-        if let ended = session.endedAt {
-            lines.append("Ended:     \(dateFmt.string(from: ended))")
-        }
-        lines.append("Duration:  \(session.durationDescription)")
-        lines.append("Languages: \(primaryName) ⇄ \(secondaryName)")
-        lines.append("")
-        lines.append("──────────────────────────────")
-        lines.append("")
-
+    private var transcriptText: String {
+        var lines = [
+            "BabelTable Conversation",
+            "",
+            "Started: \(session.startedAt.formatted(date: .abbreviated, time: .standard))",
+            "Duration: \(session.durationDescription)",
+            "Languages: \(languageName(session.primaryLanguageCode)) ⇄ \(languageName(session.secondaryLanguageCode))",
+            ""
+        ]
         if let turns = session.chatTurns, !turns.isEmpty {
             for turn in turns {
-                let srcLang = languageDisplay(turn.sourceLanguageCode)
-                lines.append("[\(timeFmt.string(from: turn.startedAt))] \(srcLang)")
+                lines.append("[\(turn.startedAt.formatted(date: .omitted, time: .standard))] \(languageName(turn.sourceLanguageCode))")
                 lines.append(turn.sourceText)
                 if !turn.bestTranslation.isEmpty {
-                    let dstLang = languageDisplay(turn.translatedLanguageCode)
-                    lines.append("→ \(dstLang)")
-                    lines.append(turn.bestTranslation)
+                    lines.append("→ \(languageName(turn.translatedLanguageCode)): \(turn.bestTranslation)")
                 }
                 lines.append("")
             }
         } else {
-            // Older sessions without chatTurns: fall back to per-panel lines.
-            if !session.primaryLines.isEmpty {
-                lines.append("[\(primaryName)]")
-                for line in session.primaryLines {
-                    lines.append("[\(timeFmt.string(from: line.timestamp))] \(line.text)")
-                }
-                lines.append("")
-            }
-            if !session.secondaryLines.isEmpty {
-                lines.append("[\(secondaryName)]")
-                for line in session.secondaryLines {
-                    lines.append("[\(timeFmt.string(from: line.timestamp))] \(line.text)")
-                }
-                lines.append("")
+            for line in (session.primaryLines + session.secondaryLines).sorted(by: { $0.timestamp < $1.timestamp }) {
+                lines.append("[\(line.timestamp.formatted(date: .omitted, time: .standard))] \(line.text)")
             }
         }
-
         return lines.joined(separator: "\n")
     }
+}
 
-    private func languageDisplay(_ code: String) -> String {
-        guard !code.isEmpty, code != "auto" else { return "?" }
-        let normalized = String(code.split(separator: "-").first ?? Substring(code))
-        return SupportedLanguages.byCode(normalized)?.nativeName
-            ?? SupportedLanguages.byCode(code)?.nativeName
-            ?? code.uppercased()
+private struct ArchivedTurnCard: View {
+    let turn: ChatTurn
+    let session: ChatSession
+
+    private var isPrimary: Bool {
+        SupportedLanguages.normalize(turn.sourceLanguageCode) == session.primaryLanguageCode
     }
 
-    @ViewBuilder
-    private func chatTurnRow(_ turn: ChatTurn) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 6) {
+    private var tint: Color { isPrimary ? BabelTheme.local : BabelTheme.remote }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            HStack {
                 Text(SupportedLanguages.label(forCode: turn.sourceLanguageCode))
-                    .font(.caption2.weight(.bold))
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(.blue.opacity(0.15), in: .capsule)
-                    .foregroundStyle(.blue)
-                Text(turn.startedAt.formatted(date: .omitted, time: .standard))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(tint)
+                Spacer()
+                Text(turn.startedAt.formatted(date: .omitted, time: .shortened))
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.tertiary)
                     .monospacedDigit()
-                if turn.isRefined {
-                    Image(systemName: "sparkles")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
             }
             Text(turn.sourceText)
                 .font(.body)
             if !turn.bestTranslation.isEmpty {
-                Text("→ \(turn.bestTranslation)")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
+                Divider()
+                HStack(spacing: 5) {
+                    Text("Translation")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    if turn.isRefined {
+                        Image(systemName: "sparkles")
+                            .font(.caption2)
+                            .foregroundStyle(BabelTheme.primary)
+                            .accessibilityLabel("Refined")
+                    }
+                }
+                Text(turn.bestTranslation)
+                    .font(.body.weight(.medium))
             }
         }
-        .padding(.vertical, 2)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .babelCard(tint: tint)
+        .accessibilityElement(children: .combine)
     }
+}
 
-    @ViewBuilder
-    private func transcriptRow(_ line: TranscriptLine) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(line.text)
-                .font(.body)
-            Text(line.timestamp.formatted(date: .omitted, time: .standard))
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .monospacedDigit()
+private struct LegacyTranscriptCard: View {
+    let title: String
+    let lines: [TranscriptLine]
+    let tint: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.headline)
+                .foregroundStyle(tint)
+            if lines.isEmpty {
+                Text("No transcript recorded")
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(lines) { line in
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(line.text)
+                        Text(line.timestamp.formatted(date: .omitted, time: .standard))
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                            .monospacedDigit()
+                    }
+                }
+            }
         }
-        .padding(.vertical, 2)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .babelCard(tint: tint)
     }
 }

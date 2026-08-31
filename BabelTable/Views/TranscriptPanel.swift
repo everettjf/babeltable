@@ -6,6 +6,7 @@ struct TranscriptPanel: View {
     let text: String
     let accent: Color
     let isRunning: Bool
+    var isActiveSpeaker: Bool = false
 
     @Environment(\.horizontalSizeClass) private var hSizeClass
 
@@ -21,33 +22,18 @@ struct TranscriptPanel: View {
         isRegular ? .system(size: 28, weight: .regular) : .title3
     }
 
-    private var titleFont: Font {
-        isRegular ? .title3.weight(.semibold) : .headline
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(title)
-                    .font(titleFont)
-                    .foregroundStyle(accent)
+                LanguagePill(languageCode: languageCode, title: title, tint: accent)
                 Spacer()
-                if isRunning {
-                    HStack(spacing: 4) {
-                        Circle()
-                            .fill(.red)
-                            .frame(width: 6, height: 6)
-                        Text("LIVE")
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(.secondary)
-                    }
+                if isActiveSpeaker {
+                    StatusPill(title: "Speaking", systemImage: "waveform", tint: accent, isAnimated: true)
+                } else if isRunning {
+                    Text("Listening")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
                 }
-                Text(badge)
-                    .font(.caption2.weight(.semibold))
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(accent.opacity(0.15), in: .capsule)
-                    .foregroundStyle(accent)
             }
             .padding(.horizontal)
             .padding(.top, 12)
@@ -55,12 +41,27 @@ struct TranscriptPanel: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text(text.isEmpty ? placeholder : text)
+                        if text.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Image(systemName: isRunning ? "waveform" : "text.bubble")
+                                    .font(.title2)
+                                    .foregroundStyle(accent.opacity(0.7))
+                                    .accessibilityHidden(true)
+                                Text(placeholder)
+                                    .font(transcriptFont)
+                                Text(isRunning ? "Translation appears here as soon as the other person speaks." : "The translated conversation will stay readable on this side of the table.")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .foregroundStyle(.secondary)
+                        } else {
+                            Text(text)
                             .font(transcriptFont)
-                            .foregroundStyle(text.isEmpty ? .secondary : .primary)
+                            .foregroundStyle(.primary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .textSelection(.enabled)
-                            .id("transcript")
+                        }
+                        Color.clear.frame(height: 1).id("transcript")
                     }
                     .padding(.horizontal)
                     .padding(.bottom, 16)
@@ -79,15 +80,16 @@ struct TranscriptPanel: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(accent.opacity(0.04))
+        .background(accent.opacity(isActiveSpeaker ? 0.11 : 0.05), in: .rect(cornerRadius: BabelTheme.radius))
+        .overlay {
+            RoundedRectangle(cornerRadius: BabelTheme.radius)
+                .stroke(accent.opacity(isActiveSpeaker ? 0.35 : 0.10), lineWidth: isActiveSpeaker ? 1.5 : 1)
+        }
+        .animation(.easeInOut(duration: 0.2), value: isActiveSpeaker)
     }
 
     private var placeholder: String {
         isRunning ? "Listening…" : "Tap Start to begin translating."
     }
 
-    /// Flag for the panel's language; falls back to the uppercased code.
-    private var badge: String {
-        SupportedLanguages.resolve(languageCode)?.flag ?? languageCode.uppercased()
-    }
 }

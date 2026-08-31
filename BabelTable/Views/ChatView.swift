@@ -24,12 +24,13 @@ struct ChatView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 12) {
                     if coordinator.chatTurns.isEmpty && coordinator.openTurn == nil {
-                        ContentUnavailableView(
-                            placeholderTitle,
-                            systemImage: "bubble.left.and.bubble.right",
-                            description: Text(placeholderDescription)
+                        EmptyConversationCard(
+                            title: placeholderTitle,
+                            message: placeholderDescription,
+                            systemImage: coordinator.status == .running ? "waveform" : "bubble.left.and.bubble.right",
+                            tint: BabelTheme.primary
                         )
-                        .padding(.top, 60)
+                        .padding(.top, 24)
                     } else {
                         ForEach(coordinator.chatTurns) { turn in
                             ChatTurnBubble(
@@ -59,9 +60,9 @@ struct ChatView: View {
                         }
                     }
                 }
-                .padding(.horizontal, 12)
-                .padding(.top, 12)
-                .padding(.bottom, 24)
+                .padding(.horizontal, BabelTheme.pagePadding)
+                .padding(.top, 10)
+                .padding(.bottom, 68)
                 .frame(maxWidth: contentMaxWidth)
                 .frame(maxWidth: .infinity)
             }
@@ -82,11 +83,34 @@ struct ChatView: View {
             .onChange(of: coordinator.drainingTurn?.translatedText) { _, _ in
                 scrollToBottom(proxy)
             }
+            .overlay(alignment: .bottomTrailing) {
+                if !isNearBottom && (coordinator.openTurn != nil || !coordinator.chatTurns.isEmpty) {
+                    Button {
+                        scrollToLatest(proxy)
+                    } label: {
+                        Label("Latest", systemImage: "arrow.down")
+                            .font(.caption.weight(.semibold))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 9)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .buttonBorderShape(.capsule)
+                    .tint(BabelTheme.primary)
+                    .padding(16)
+                    .shadow(color: .black.opacity(0.12), radius: 8, y: 3)
+                    .transition(.scale.combined(with: .opacity))
+                }
+            }
+            .animation(.easeOut(duration: 0.18), value: isNearBottom)
         }
     }
 
     private func scrollToBottom(_ proxy: ScrollViewProxy) {
         guard isNearBottom else { return }
+        scrollToLatest(proxy)
+    }
+
+    private func scrollToLatest(_ proxy: ScrollViewProxy) {
         withAnimation(.easeOut(duration: 0.15)) {
             if coordinator.openTurn != nil {
                 proxy.scrollTo("open", anchor: .bottom)
@@ -94,6 +118,7 @@ struct ChatView: View {
                 proxy.scrollTo(last.id, anchor: .bottom)
             }
         }
+        isNearBottom = true
     }
 
     private var placeholderTitle: String {
@@ -127,20 +152,20 @@ private struct ChatTurnBubble: View {
 
     @ViewBuilder
     private var bubbleColumn: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 7) {
                 Text(sourceTag)
-                    .font(.caption2.weight(.bold))
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(accent.opacity(0.18), in: .capsule)
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(accent)
                 Text(turn.startedAt.formatted(date: .omitted, time: .shortened))
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.tertiary)
                     .monospacedDigit()
                 if isLive {
-                    Circle().fill(.red).frame(width: 5, height: 5)
+                    Label("Live", systemImage: "waveform")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(BabelTheme.live)
+                        .symbolEffect(.pulse, options: .repeating)
                 }
             }
 
@@ -149,10 +174,13 @@ private struct ChatTurnBubble: View {
                 .foregroundStyle(.primary)
 
             if !turn.bestTranslation.isEmpty || isLive {
-                Divider().padding(.vertical, 2)
                 HStack(spacing: 6) {
-                    Text(translationTag)
+                    Image(systemName: "arrow.turn.down.right")
                         .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                        .accessibilityHidden(true)
+                    Text(translationTag)
+                        .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                     if turn.isRefined {
                         Image(systemName: "sparkles")
@@ -163,21 +191,27 @@ private struct ChatTurnBubble: View {
                     Spacer(minLength: 0)
                 }
                 Text(turn.bestTranslation.isEmpty ? "…" : turn.bestTranslation)
-                    .font(.body)
-                    .foregroundStyle(.primary)
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(turn.bestTranslation.isEmpty ? .secondary : .primary)
                     .animation(.easeInOut(duration: 0.2), value: turn.bestTranslation)
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(accent.opacity(0.10), in: .rect(cornerRadius: 14))
+        .padding(.horizontal, 15)
+        .padding(.vertical, 12)
+        .background(accent.opacity(0.09), in: .rect(cornerRadius: BabelTheme.radius, style: .continuous))
         .overlay(alignment: .leading) {
             Rectangle()
                 .fill(accent)
                 .frame(width: 3)
-                .clipShape(.rect(cornerRadii: .init(topLeading: 14, bottomLeading: 14)))
+                .clipShape(.rect(cornerRadii: .init(topLeading: BabelTheme.radius, bottomLeading: BabelTheme.radius)))
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: BabelTheme.radius, style: .continuous)
+                .stroke(accent.opacity(0.12), lineWidth: 1)
         }
         .contextMenu { copyMenu }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityDescription)
     }
 
     @ViewBuilder
@@ -223,7 +257,7 @@ private struct ChatTurnBubble: View {
     }
 
     private var accent: Color {
-        alignsRight ? .green : .blue
+        alignsRight ? BabelTheme.local : BabelTheme.remote
     }
 
     /// True when the side reading this bubble is the primary (your) speaker.
@@ -246,5 +280,15 @@ private struct ChatTurnBubble: View {
         }
         guard !turn.translatedLanguageCode.isEmpty else { return "" }
         return "→ \(SupportedLanguages.label(forCode: turn.translatedLanguageCode))"
+    }
+
+    private var accessibilityDescription: String {
+        var parts = ["\(sourceTag), \(turn.sourceText.isEmpty ? "Listening" : turn.sourceText)"]
+        if !turn.bestTranslation.isEmpty {
+            parts.append("\(translationTag), \(turn.bestTranslation)")
+        }
+        if isLive { parts.append("Live") }
+        if turn.isRefined { parts.append("Refined translation") }
+        return parts.joined(separator: ". ")
     }
 }

@@ -3,37 +3,28 @@ import SwiftUI
 struct HomeView: View {
     @Environment(AppSettings.self) private var settings
     @Environment(TranslationCoordinator.self) private var coordinator
-    @Environment(\.horizontalSizeClass) private var hSizeClass
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.openURL) private var openURL
     @Environment(\.scenePhase) private var scenePhase
 
     @State private var showingSettings = false
     @State private var showingArchive = false
 
-    private var isRegular: Bool { hSizeClass == .regular }
+    private var isRegular: Bool { horizontalSizeClass == .regular }
 
     var body: some View {
-        @Bindable var settings = settings
-
         NavigationStack {
             VStack(spacing: 0) {
                 Group {
                     switch settings.displayMode {
-                    case .faceToFace:
-                        faceToFaceLayout
-                    case .chat:
-                        chatLayout
+                    case .faceToFace: faceToFaceLayout
+                    case .chat: ChatView()
                     }
                 }
-
-                heardBar
-
-                Divider()
-
-                controlBar
-                    .padding(.vertical, 12)
-                    .background(.thinMaterial)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                sessionConsole
             }
+            .background(BabelTheme.pageBackground)
             .onChange(of: scenePhase) { _, phase in
                 switch phase {
                 case .background: coordinator.suspendForBackground()
@@ -43,311 +34,300 @@ struct HomeView: View {
             }
             .overlay(alignment: .bottom) {
                 if let summary = coordinator.sessionSummary {
-                    Text(summary)
+                    Label(summary, systemImage: "checkmark.circle.fill")
                         .font(.caption.weight(.medium))
                         .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(.ultraThinMaterial, in: .capsule)
-                        .padding(.bottom, 76)
+                        .padding(.vertical, 9)
+                        .background(.regularMaterial, in: .capsule)
+                        .shadow(color: .black.opacity(0.08), radius: 10, y: 4)
+                        .padding(.bottom, isRegular ? 154 : 142)
                         .transition(.opacity.combined(with: .move(edge: .bottom)))
                 }
             }
-            .animation(.easeInOut(duration: 0.25), value: coordinator.sessionSummary)
+            .animation(.easeInOut(duration: 0.22), value: coordinator.sessionSummary)
             .navigationTitle("BabelTable")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        showingArchive = true
-                    } label: {
-                        Image(systemName: "clock.arrow.circlepath")
-                    }
-                    .accessibilityLabel("History")
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    ShareLink(
-                        item: coordinator.liveCaptionText,
-                        subject: Text("BabelTable Live Captions")
-                    ) {
-                        Image(systemName: "captions.bubble")
-                    }
-                    .accessibilityLabel("Share live captions")
-                    .disabled(!coordinator.hasContent)
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        coordinator.newConversation()
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                    .accessibilityLabel("New conversation")
-                    .disabled(!coordinator.hasContent)
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showingSettings = true
-                    } label: {
-                        Image(systemName: "gearshape")
-                    }
-                }
+            .toolbar { toolbarContent }
+            .safeAreaInset(edge: .top, spacing: 0) { networkBanner }
+            .sheet(isPresented: $showingArchive) { ArchiveView() }
+            .sheet(isPresented: $showingSettings) { settingsSheet }
+            .alert(currentError?.title ?? "Translation error", isPresented: errorBinding) {
+                errorActions
+            } message: {
+                if let currentError { Text(currentError.message) }
             }
-            .safeAreaInset(edge: .top, spacing: 0) {
-                if let message = coordinator.degradationMessage {
-                    Label(message, systemImage: coordinator.networkCondition == .offline
-                          ? "wifi.slash" : "network.badge.shield.half.filled")
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(coordinator.networkCondition == .offline ? .orange : .secondary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
-                        .background(.thinMaterial)
-                }
-            }
-            .sheet(isPresented: $showingArchive) {
-                ArchiveView()
-            }
-            .sheet(isPresented: $showingSettings) {
-                NavigationStack {
-                    SettingsView()
-                        .toolbar {
-                            ToolbarItem(placement: .topBarTrailing) {
-                                Button {
-                                    showingSettings = false
-                                } label: {
-                                    Image(systemName: "xmark")
-                                }
-                                .accessibilityLabel("Close settings")
-                            }
-                        }
-                }
-            }
-            .alert(currentError?.title ?? "Translation error",
-                   isPresented: errorBinding,
-                   actions: {
-                       if let error = currentError {
-                           switch error.recovery {
-                           case .openURL(let url):
-                               Button(error.recoveryTitle ?? "Learn more") {
-                                   coordinator.dismissError()
-                                   openURL(url)
-                               }
-                           case .openSettings:
-                               Button(error.recoveryTitle ?? "Open Settings") {
-                                   coordinator.dismissError()
-                                   showingSettings = true
-                               }
-                           case .none:
-                               EmptyView()
-                           }
-                       }
-                       Button("OK", role: .cancel) {
-                           coordinator.dismissError()
-                       }
-                   },
-                   message: {
-                       if let error = currentError {
-                           Text(error.message)
-                       }
-                   })
         }
     }
 
-    // MARK: - Layouts
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            Button { showingArchive = true } label: { Image(systemName: "clock.arrow.circlepath") }
+                .accessibilityLabel("History")
+        }
+        ToolbarItemGroup(placement: .topBarTrailing) {
+            if coordinator.hasContent {
+                ShareLink(item: coordinator.liveCaptionText, subject: Text("BabelTable Live Captions")) {
+                    Image(systemName: "square.and.arrow.up")
+                }
+                .accessibilityLabel("Share live captions")
+            }
+            Menu {
+                Button { coordinator.newConversation() } label: {
+                    Label("New conversation", systemImage: "plus")
+                }
+                .disabled(!coordinator.hasContent)
+                Button { showingSettings = true } label: {
+                    Label("Settings", systemImage: "gearshape")
+                }
+            } label: { Image(systemName: "ellipsis.circle") }
+                .accessibilityLabel("More")
+        }
+    }
 
-    /// One-line tail of the raw recognized speech (before translation), so a
-    /// wrong translation can be told apart from a mis-heard source. Only
-    /// shown in face-to-face mode; chat mode already shows source text per turn.
     @ViewBuilder
-    private var heardBar: some View {
-        if settings.displayMode == .faceToFace,
-           coordinator.status == .running || coordinator.status == .reconnecting,
-           !coordinator.lastInputTranscript.isEmpty {
-            Text(String(coordinator.lastInputTranscript.suffix(140)))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .truncationMode(.head)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal)
-                .padding(.vertical, 4)
+    private var networkBanner: some View {
+        if let message = coordinator.degradationMessage {
+            Label(message, systemImage: coordinator.networkCondition == .offline ? "wifi.slash" : "network.badge.shield.half.filled")
+                .font(.caption.weight(.medium))
+                .foregroundStyle(coordinator.networkCondition == .offline ? BabelTheme.warning : .secondary)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(.regularMaterial)
+                .accessibilityElement(children: .combine)
         }
     }
 
-    /// Panel header: the speaker's name in speaker-label mode, else the
-    /// language's native name.
+    private var settingsSheet: some View {
+        NavigationStack {
+            SettingsView()
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { showingSettings = false }
+                    }
+                }
+        }
+    }
+
+    private var faceToFaceLayout: some View {
+        VStack(spacing: 0) {
+            TranscriptPanel(
+                title: panelTitle(forSpeaker: settings.secondarySpeakerName, language: settings.secondaryLanguage),
+                languageCode: coordinator.secondaryLanguageCode,
+                text: coordinator.secondaryTranscript,
+                accent: BabelTheme.remote,
+                isRunning: coordinator.status == .running,
+                isActiveSpeaker: activeLanguageCode == settings.primaryLanguageCode
+            )
+            .rotationEffect(.degrees(180))
+            conversationAxis
+            TranscriptPanel(
+                title: panelTitle(forSpeaker: settings.primarySpeakerName, language: settings.primaryLanguage),
+                languageCode: coordinator.primaryLanguageCode,
+                text: coordinator.primaryTranscript,
+                accent: BabelTheme.local,
+                isRunning: coordinator.status == .running,
+                isActiveSpeaker: activeLanguageCode == settings.secondaryLanguageCode
+            )
+        }
+        .padding(.horizontal, isRegular ? 20 : 10)
+        .padding(.top, 8)
+    }
+
+    private var conversationAxis: some View {
+        HStack(spacing: 8) {
+            Rectangle().fill(BabelTheme.remote.opacity(0.25)).frame(height: 1)
+            Image(systemName: "arrow.up.arrow.down")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
+                .padding(7)
+                .background(BabelTheme.elevatedBackground, in: .circle)
+            Rectangle().fill(BabelTheme.local.opacity(0.25)).frame(height: 1)
+        }
+        .padding(.vertical, 5)
+        .accessibilityHidden(true)
+    }
+
     private func panelTitle(forSpeaker speaker: String, language: Language) -> String {
         settings.speakerLabelStyle == .speaker ? speaker : language.nativeName
     }
 
-    @ViewBuilder
-    private var faceToFaceLayout: some View {
-        VStack(spacing: 0) {
-            // Top panel — rotated 180° for the person sitting opposite.
-            TranscriptPanel(
-                title: panelTitle(forSpeaker: settings.secondarySpeakerName,
-                                  language: settings.secondaryLanguage),
-                languageCode: coordinator.secondaryLanguageCode,
-                text: coordinator.secondaryTranscript,
-                accent: .blue,
-                isRunning: coordinator.status == .running
-            )
-            .rotationEffect(.degrees(180))
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-            Divider()
-
-            // Bottom panel — for the user holding the phone.
-            TranscriptPanel(
-                title: panelTitle(forSpeaker: settings.primarySpeakerName,
-                                  language: settings.primaryLanguage),
-                languageCode: coordinator.primaryLanguageCode,
-                text: coordinator.primaryTranscript,
-                accent: .green,
-                isRunning: coordinator.status == .running
-            )
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
+    private var activeLanguageCode: String? {
+        guard let code = coordinator.openTurn?.sourceLanguageCode else { return nil }
+        return SupportedLanguages.normalize(code)
     }
 
-    @ViewBuilder
-    private var chatLayout: some View {
-        ChatView()
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    // MARK: - Control bar
-
-    private var currentError: TranslationError? {
-        if case let .error(error) = coordinator.status {
-            return error
-        }
-        return nil
-    }
-
-    private var errorBinding: Binding<Bool> {
-        Binding(
-            get: {
-                if case .error = coordinator.status { return true }
-                return false
-            },
-            set: { newValue in
-                if !newValue { coordinator.dismissError() }
+    private var sessionConsole: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 8) {
+                LanguagePill(languageCode: settings.primaryLanguageCode, title: settings.primaryLanguage.nativeName, tint: BabelTheme.local)
+                Image(systemName: "arrow.left.arrow.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+                    .accessibilityHidden(true)
+                LanguagePill(languageCode: settings.secondaryLanguageCode, title: settings.secondaryLanguage.nativeName, tint: BabelTheme.remote)
+                Spacer(minLength: 4)
+                StatusPill(title: statusText, systemImage: statusSymbol, tint: statusColor,
+                           isAnimated: coordinator.status == .starting || coordinator.status == .reconnecting)
             }
-        )
-    }
 
-    @ViewBuilder
-    private var controlBar: some View {
-        HStack(spacing: 16) {
-            statusDot
-            Spacer()
-            actionButton
-            Spacer()
-            Text(statusText)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .frame(width: sideSlotWidth, alignment: .trailing)
+            HStack(spacing: 14) {
+                MicLevelMeter(level: coordinator.micLevel, isActive: coordinator.status == .running)
+                actionButton
+                Button { showingSettings = true } label: {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.headline)
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.circle)
+                .accessibilityLabel("Conversation settings")
+            }
+
+            if !settings.hasAPIKey {
+                Button("Add an OpenAI API key to start") { showingSettings = true }
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(BabelTheme.warning)
+            } else {
+                Text(activityDescription)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity)
+            }
         }
-        .padding(.horizontal)
         .frame(maxWidth: isRegular ? 720 : .infinity)
+        .padding(.horizontal, BabelTheme.pagePadding)
+        .padding(.top, 12)
+        .padding(.bottom, 10)
         .frame(maxWidth: .infinity)
-    }
-
-    /// Width of the status / dot side slots — wider on iPad so the action
-    /// button stays centered and balanced.
-    private var sideSlotWidth: CGFloat { isRegular ? 120 : 80 }
-
-    private var statusDot: some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(statusColor)
-                .frame(width: 12, height: 12)
-            if coordinator.status == .running {
-                MicLevelMeter(level: coordinator.micLevel)
-            }
-        }
-        .frame(width: sideSlotWidth, alignment: .leading)
-        .padding(.leading)
-    }
-
-    private var statusColor: Color {
-        switch coordinator.status {
-        case .idle: return .gray
-        case .starting, .stopping, .reconnecting: return .yellow
-        case .running: return .red
-        case .error: return .orange
-        }
-    }
-
-    private var statusText: String {
-        switch coordinator.status {
-        case .idle: return "Idle"
-        case .starting: return "Starting…"
-        case .running: return "Live"
-        case .reconnecting: return "Reconnecting…"
-        case .stopping: return "Stopping…"
-        case .error: return "Error"
-        }
+        .background(.regularMaterial)
+        .overlay(alignment: .top) { Divider() }
     }
 
     @ViewBuilder
     private var actionButton: some View {
         switch coordinator.status {
         case .running, .reconnecting, .stopping:
-            Button {
-                coordinator.stop()
-            } label: {
-                Label("Stop", systemImage: "stop.circle.fill")
-                    .font(actionButtonFont)
-                    .fixedSize()
-                    .padding(.horizontal, actionButtonHPadding)
-                    .padding(.vertical, actionButtonVPadding)
-                    .background(.red, in: .capsule)
-                    .foregroundStyle(.white)
+            Button { coordinator.stop() } label: {
+                Label("Stop", systemImage: "stop.fill")
+                    .font(isRegular ? .title3.weight(.semibold) : .headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, isRegular ? 13 : 11)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.borderedProminent)
+            .buttonBorderShape(.capsule)
+            .tint(BabelTheme.live)
             .disabled(coordinator.status == .stopping)
-
         case .idle, .starting, .error:
-            Button {
-                Task { await coordinator.start() }
-            } label: {
-                Label("Start", systemImage: "mic.circle.fill")
-                    .font(actionButtonFont)
-                    .fixedSize()
-                    .padding(.horizontal, actionButtonHPadding)
-                    .padding(.vertical, actionButtonVPadding)
-                    .background(settings.hasAPIKey ? .green : .gray, in: .capsule)
-                    .foregroundStyle(.white)
+            Button { Task { await coordinator.start() } } label: {
+                Label(coordinator.status == .starting ? "Starting…" : "Start translating", systemImage: "mic.fill")
+                    .font(isRegular ? .title3.weight(.semibold) : .headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, isRegular ? 13 : 11)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.borderedProminent)
+            .buttonBorderShape(.capsule)
+            .tint(BabelTheme.primary)
             .disabled(!settings.hasAPIKey || coordinator.status == .starting)
         }
     }
 
-    private var actionButtonFont: Font {
-        isRegular ? .title2.weight(.semibold) : .title3.weight(.semibold)
+    private var statusText: String {
+        switch coordinator.status {
+        case .idle: "Ready"
+        case .starting: "Connecting"
+        case .running: "Live"
+        case .reconnecting: "Reconnecting"
+        case .stopping: "Saving"
+        case .error: "Needs attention"
+        }
     }
 
-    private var actionButtonHPadding: CGFloat { isRegular ? 32 : 24 }
-    private var actionButtonVPadding: CGFloat { isRegular ? 14 : 10 }
-}
+    private var statusSymbol: String {
+        switch coordinator.status {
+        case .idle: "checkmark.circle.fill"
+        case .starting: "antenna.radiowaves.left.and.right"
+        case .running: "waveform"
+        case .reconnecting: "arrow.trianglehead.2.clockwise.rotate.90"
+        case .stopping: "archivebox.fill"
+        case .error: "exclamationmark.triangle.fill"
+        }
+    }
 
-/// Tiny live mic-level bar next to the status dot — confirms at a glance
-/// that the mic is picking up speech (and roughly how loud).
-private struct MicLevelMeter: View {
-    let level: Float
+    private var statusColor: Color {
+        switch coordinator.status {
+        case .idle: .secondary
+        case .starting, .reconnecting: BabelTheme.warning
+        case .running: BabelTheme.live
+        case .stopping: BabelTheme.primary
+        case .error: BabelTheme.warning
+        }
+    }
 
-    var body: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .leading) {
-                Capsule().fill(.secondary.opacity(0.25))
-                Capsule()
-                    .fill(.green)
-                    .frame(width: geo.size.width * CGFloat(min(max(level, 0), 1)))
+    private var activityDescription: String {
+        switch coordinator.status {
+        case .idle: return "Place the phone between you, then speak naturally in either language."
+        case .starting: return "Opening two secure realtime translation sessions…"
+        case .running:
+            if let turn = coordinator.openTurn, !turn.sourceText.isEmpty {
+                return "Heard: \(String(turn.sourceText.suffix(90)))"
+            }
+            if coordinator.drainingTurn != nil { return "Finishing the current translation…" }
+            return "Listening for either speaker…"
+        case .reconnecting: return "Keeping your conversation safe while the connection returns…"
+        case .stopping: return "Saving this conversation to History…"
+        case .error: return "Open the alert for recovery options."
+        }
+    }
+
+    private var currentError: TranslationError? {
+        if case let .error(error) = coordinator.status { return error }
+        return nil
+    }
+
+    private var errorBinding: Binding<Bool> {
+        Binding(get: { if case .error = coordinator.status { true } else { false } },
+                set: { if !$0 { coordinator.dismissError() } })
+    }
+
+    @ViewBuilder
+    private var errorActions: some View {
+        if let error = currentError {
+            switch error.recovery {
+            case .openURL(let url):
+                Button(error.recoveryTitle ?? "Learn more") { coordinator.dismissError(); openURL(url) }
+            case .openSettings:
+                Button(error.recoveryTitle ?? "Open Settings") { coordinator.dismissError(); showingSettings = true }
+            case .none: EmptyView()
             }
         }
-        .frame(width: 40, height: 6)
+        Button("OK", role: .cancel) { coordinator.dismissError() }
+    }
+}
+
+private struct MicLevelMeter: View {
+    let level: Float
+    let isActive: Bool
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Image(systemName: isActive ? "waveform" : "mic")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(isActive ? BabelTheme.local : .secondary)
+            GeometryReader { geometry in
+                ZStack(alignment: .bottom) {
+                    Capsule().fill(.secondary.opacity(0.16))
+                    Capsule().fill(BabelTheme.local)
+                        .frame(height: geometry.size.height * max(0.08, CGFloat(min(max(level, 0), 1))))
+                }
+            }
+            .frame(width: 8, height: 28)
+        }
+        .frame(width: 44, height: 44)
+        .accessibilityElement(children: .ignore)
         .accessibilityLabel("Microphone level")
+        .accessibilityValue(isActive ? "\(Int(level * 100)) percent" : "Inactive")
     }
 }

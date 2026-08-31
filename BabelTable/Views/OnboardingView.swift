@@ -40,7 +40,13 @@ struct OnboardingView: View {
                 .padding(.horizontal, 24)
                 .padding(.bottom, 24)
         }
-        .background(backgroundGradient.ignoresSafeArea())
+        .background(BabelTheme.pageBackground.ignoresSafeArea())
+        .overlay(alignment: .top) {
+            backgroundGradient
+                .frame(height: 360)
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+        }
         .interactiveDismissDisabled(true)
         .onAppear {
             // If a key is already in the Keychain (e.g. when this onboarding
@@ -56,7 +62,7 @@ struct OnboardingView: View {
     private var welcomeStep: some View {
         OnboardingPage(
             icon: "bubble.left.and.bubble.right.fill",
-            iconColor: .green,
+            iconColor: BabelTheme.local,
             showAppIcon: true,
             title: "Welcome to BabelTable",
             subtitle: "Real-time speech translation\nbetween two people."
@@ -64,13 +70,13 @@ struct OnboardingView: View {
             VStack(alignment: .leading, spacing: 20) {
                 FeatureRow(
                     icon: "person.2.fill",
-                    color: .green,
+                    color: BabelTheme.local,
                     title: "Two-way conversation",
                     description: "Speak naturally in either language. The model auto-detects who is speaking which."
                 )
                 FeatureRow(
                     icon: "rectangle.split.1x2.fill",
-                    color: .blue,
+                    color: BabelTheme.remote,
                     title: "Two layouts",
                     description: "Face-to-face across the table, or chat-style sitting side by side."
                 )
@@ -102,7 +108,7 @@ struct OnboardingView: View {
                 )
                 InfoBox(
                     icon: "lock.shield.fill",
-                    color: .green,
+                    color: BabelTheme.local,
                     title: "Your key, your device",
                     message: "Your API key is stored only on this device in the iOS Keychain. BabelTable has no backend and never sees your traffic."
                 )
@@ -129,7 +135,7 @@ struct OnboardingView: View {
                         Image(systemName: "arrow.up.right.square")
                     }
                     .padding(14)
-                    .background(.regularMaterial, in: .rect(cornerRadius: 12))
+                    .babelCard(padding: 14, tint: BabelTheme.primary)
                 }
                 .foregroundStyle(.primary)
 
@@ -141,17 +147,19 @@ struct OnboardingView: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .padding(14)
-                        .background(.regularMaterial, in: .rect(cornerRadius: 12))
+                        .background(BabelTheme.elevatedBackground, in: .rect(cornerRadius: BabelTheme.smallRadius))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: BabelTheme.smallRadius)
+                                .stroke(Color.primary.opacity(0.08))
+                        }
                         .onChange(of: keyDraft) { keyTestError = nil }
                     HStack {
-                        Button {
-                            if let s = UIPasteboard.general.string {
-                                keyDraft = s.trimmingCharacters(in: .whitespacesAndNewlines)
+                        PasteButton(payloadType: String.self) { values in
+                            if let value = values.first {
+                                keyDraft = value.trimmingCharacters(in: .whitespacesAndNewlines)
                             }
-                        } label: {
-                            Label("Paste from clipboard", systemImage: "doc.on.clipboard")
-                                .font(.caption)
                         }
+                        .labelStyle(.titleAndIcon)
                         .buttonStyle(.bordered)
                         .controlSize(.small)
                         Spacer()
@@ -183,13 +191,13 @@ struct OnboardingView: View {
                     title: "Your language",
                     description: "Translations into this language are shown to you.",
                     selection: $settings.primaryLanguageCode,
-                    accent: .green
+                    accent: BabelTheme.local
                 )
                 LanguageCard(
                     title: "Their language",
                     description: "Translations into this language are shown to the other speaker.",
                     selection: $settings.secondaryLanguageCode,
-                    accent: .blue
+                    accent: BabelTheme.remote
                 )
             }
             .padding(.horizontal, 24)
@@ -203,7 +211,7 @@ struct OnboardingView: View {
         HStack(spacing: 8) {
             ForEach(0..<totalSteps, id: \.self) { i in
                 Capsule()
-                    .fill(i <= step ? Color.accentColor : Color.gray.opacity(0.25))
+                    .fill(i <= step ? BabelTheme.primary : Color.gray.opacity(0.20))
                     .frame(height: 4)
                     .frame(maxWidth: .infinity)
                     .animation(.easeOut(duration: 0.25), value: step)
@@ -223,10 +231,11 @@ struct OnboardingView: View {
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(primaryActionEnabled ? Color.accentColor : Color.gray.opacity(0.4),
-                                in: .capsule)
                     .foregroundStyle(.white)
             }
+            .buttonStyle(.borderedProminent)
+            .buttonBorderShape(.capsule)
+            .tint(BabelTheme.primary)
             .disabled(!primaryActionEnabled)
 
             if step > 0 {
@@ -247,10 +256,10 @@ struct OnboardingView: View {
 
     private var backgroundGradient: LinearGradient {
         let colors: [Color] = switch step {
-        case 0: [.green.opacity(0.15), .clear]
+        case 0: [BabelTheme.local.opacity(0.16), .clear]
         case 1: [.orange.opacity(0.15), .clear]
         case 2: [.yellow.opacity(0.12), .clear]
-        default: [.blue.opacity(0.15), .clear]
+        default: [BabelTheme.remote.opacity(0.15), .clear]
         }
         return LinearGradient(colors: colors, startPoint: .top, endPoint: .center)
     }
@@ -323,19 +332,20 @@ private struct OnboardingPage<Content: View>: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 96, height: 96)
-                        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                        .clipShape(.rect(cornerRadius: 22, style: .continuous))
                         .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
                         .padding(.top, 32)
                 } else {
                     Image(systemName: icon)
-                        .font(.system(size: 64, weight: .semibold))
+                        .font(.largeTitle.weight(.semibold))
+                        .imageScale(.large)
                         .foregroundStyle(iconColor)
                         .padding(.top, 32)
                 }
 
                 VStack(spacing: 8) {
                     Text(title)
-                        .font(.system(size: 30, weight: .bold))
+                        .font(.largeTitle.bold())
                         .multilineTextAlignment(.center)
                     Text(subtitle)
                         .font(.body)
@@ -367,7 +377,7 @@ private struct FeatureRow: View {
                 .font(.title3)
                 .foregroundStyle(color)
                 .frame(width: 32, height: 32)
-                .background(color.opacity(0.15), in: .rect(cornerRadius: 8))
+                .background(color.opacity(0.15), in: .rect(cornerRadius: BabelTheme.smallRadius))
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.headline)
@@ -391,7 +401,7 @@ private struct InfoBox: View {
                 .font(.title3)
                 .foregroundStyle(color)
                 .frame(width: 32, height: 32)
-                .background(color.opacity(0.15), in: .rect(cornerRadius: 8))
+                .background(color.opacity(0.15), in: .rect(cornerRadius: BabelTheme.smallRadius))
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.headline)
@@ -402,8 +412,7 @@ private struct InfoBox: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(.regularMaterial, in: .rect(cornerRadius: 12))
+        .babelCard(padding: 14, tint: color)
     }
 }
 
@@ -430,11 +439,10 @@ private struct LanguageCard: View {
             .pickerStyle(.menu)
             .padding(8)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(accent.opacity(0.12), in: .rect(cornerRadius: 10))
+            .background(accent.opacity(0.12), in: .rect(cornerRadius: BabelTheme.smallRadius))
             .tint(accent)
         }
-        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.regularMaterial, in: .rect(cornerRadius: 14))
+        .babelCard(padding: 14, tint: accent)
     }
 }

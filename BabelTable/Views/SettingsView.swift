@@ -19,6 +19,30 @@ struct SettingsView: View {
 
         Form {
             Section {
+                HStack(spacing: 14) {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.title2.weight(.semibold))
+                        .foregroundStyle(BabelTheme.primary)
+                        .frame(width: 46, height: 46)
+                        .background(BabelTheme.primarySoft, in: .rect(cornerRadius: BabelTheme.smallRadius))
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Conversation setup")
+                            .font(.headline)
+                        Text("Choose the essentials here. Advanced translation and audio controls are further below.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+
+            Section {
+                Label(settings.hasAPIKey ? "API key ready" : "API key required",
+                      systemImage: settings.hasAPIKey ? "checkmark.shield.fill" : "exclamationmark.shield.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(settings.hasAPIKey ? BabelTheme.local : BabelTheme.warning)
+
                 if apiKeyVisible {
                     TextField("sk-…", text: $apiKeyDraft, axis: .vertical)
                         .textInputAutocapitalization(.never)
@@ -55,7 +79,7 @@ struct SettingsView: View {
                         .font(.subheadline)
                 }
             } header: {
-                Text("OpenAI API Key")
+                Label("Connection", systemImage: "key.fill")
             } footer: {
                 Text("Tested against OpenAI before saving, then stored securely in the iOS Keychain on this device.")
             }
@@ -72,7 +96,7 @@ struct SettingsView: View {
                     }
                 }
             } header: {
-                Text("Languages")
+                Label("Languages", systemImage: "globe")
             } footer: {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Two simultaneous translation sessions run — one for each language. The model auto-detects who is speaking which.")
@@ -99,7 +123,7 @@ struct SettingsView: View {
                     Label("Logs", systemImage: "doc.text.magnifyingglass")
                 }
             } header: {
-                Text("Diagnostics")
+                Label("Diagnostics", systemImage: "stethoscope")
             } footer: {
                 Text("Connection events and detailed error messages from the translation service. Helpful when a session unexpectedly stops.")
             }
@@ -111,7 +135,7 @@ struct SettingsView: View {
                     Label("Show welcome tour again", systemImage: "sparkles")
                 }
             } header: {
-                Text("Help")
+                Label("Help", systemImage: "questionmark.circle")
             }
 
             Section {
@@ -135,9 +159,12 @@ struct SettingsView: View {
                 LabeledContent("Sample rate", value: "24 kHz PCM16")
                 LabeledContent("List price", value: priceString(UsageTracker.pricePerMinute) + " / min")
             } header: {
-                Text("About")
+                Label("About", systemImage: "info.circle")
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(BabelTheme.pageBackground)
+        .listSectionSpacing(18)
         .navigationTitle("Settings")
         .onAppear {
             apiKeyDraft = settings.apiKey
@@ -177,7 +204,7 @@ struct SettingsView: View {
                     .textInputAutocapitalization(.words)
             }
         } header: {
-            Text("Transcript labels")
+            Label("Conversation labels", systemImage: "person.2.fill")
         } footer: {
             Text(settings.speakerLabelStyle == .speaker
                  ? "Each utterance is tagged with who spoke it."
@@ -198,7 +225,7 @@ struct SettingsView: View {
                 }
             }
         } header: {
-            Text("Display")
+            Label("Display", systemImage: "rectangle.split.2x1")
         } footer: {
             Text("Face-to-face rotates the top panel for the person sitting across the table. Same screen shows one chat-style list for both of you.")
         }
@@ -244,7 +271,13 @@ struct SettingsView: View {
                 }
             }
         } header: {
-            Text("Translation refinement")
+            HStack {
+                Label("Translation refinement", systemImage: "sparkles")
+                Spacer()
+                Text("OPTIONAL")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.secondary)
+            }
         } footer: {
             Text("After each turn finishes, a text model (\(TranslationRefiner.model)) polishes the translation for fluency, tone, glossary terms, and consistency with earlier turns. This makes a separate billed API call per turn. Turn off to use the raw real-time translation only.")
         }
@@ -275,7 +308,13 @@ struct SettingsView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         } header: {
-            Text("Audio & Recognition")
+            HStack {
+                Label("Audio & Recognition", systemImage: "waveform")
+                Spacer()
+                Text("ADVANCED")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.secondary)
+            }
         } footer: {
             Text("Tune these if turns feel slow to appear or if a second speaker is harder to recognize. Changes apply on the next session.")
         }
@@ -313,7 +352,7 @@ struct SettingsView: View {
                 Label("Reset usage history", systemImage: "trash")
             }
         } header: {
-            Text("Usage")
+            Label("Usage", systemImage: "chart.bar.fill")
         } footer: {
             Text("Estimated from session duration at the OpenAI list price (\(priceString(UsageTracker.pricePerMinute)) / min). OpenAI's official billing dashboard is authoritative.")
         }
@@ -407,7 +446,7 @@ private struct UsageChart: View {
                 y: .value("Minutes", day.minutes)
             )
             .foregroundStyle(barColor(day))
-            .cornerRadius(4)
+            .clipShape(.rect(cornerRadius: 4))
         }
         .chartXAxis {
             AxisMarks(values: .stride(by: .day)) { value in
@@ -426,6 +465,6 @@ private struct UsageChart: View {
 
     private func barColor(_ day: DailyUsage) -> Color {
         let isToday = Calendar.current.isDateInToday(day.date)
-        return isToday ? .green : .blue.opacity(0.7)
+        return isToday ? BabelTheme.local : BabelTheme.remote.opacity(0.7)
     }
 }
