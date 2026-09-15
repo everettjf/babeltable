@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BabelTable — Privacy Policy</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 3rem 1.25rem 5rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.7;
+    color: #111;
+    background: #fff;
+    -webkit-text-size-adjust: 100%;
+  }
+  main { max-width: 44rem; margin: 0 auto; }
+  h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 .25rem; letter-spacing: -0.02em; }
+  h2 { font-size: 1.15rem; margin: 2.25rem 0 .5rem; letter-spacing: -0.01em; }
+  p, li { font-size: 1rem; }
+  .updated { color: #6b7280; margin: 0 0 2rem; font-size: .9rem; }
+  a { color: #2563eb; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9em; }
+  footer { margin-top: 3.5rem; padding-top: 1.25rem; border-top: 1px solid #e5e7eb; font-size: .9rem; color: #6b7280; }
+  @media (prefers-color-scheme: dark) {
+    body { color: #e8eaed; background: #0b0c0e; }
+    .updated, footer { color: #9aa0a6; }
+    a { color: #8ab4f8; }
+    footer { border-top-color: #2a2c30; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>BabelTable Privacy Policy</h1>
+  <p class="updated">Last updated: May 31, 2026</p>
+
+  <p>BabelTable is a bring-your-own-key real-time translation app.</p>
+
+  <h2>Data We Collect</h2>
+  <p>BabelTable does not collect, sell, or share personal data through a developer-operated server. The developer operates no backend for this app.</p>
+
+  <h2>OpenAI API Key</h2>
+  <p>Your OpenAI API key is stored locally on your device in the iOS Keychain. BabelTable does not send your API key to any server controlled by the developer.</p>
+
+  <h2>Speech and Translation</h2>
+  <p>When you start a translation session, audio is sent directly from the app to OpenAI's realtime translation service using the API key you provide. OpenAI processes that audio to provide transcription and translation responses.</p>
+
+  <h2>Translation Refinement</h2>
+  <p>Translation refinement is on by default and can be turned off in Settings. When it is enabled, the transcript text for each finished turn is additionally sent to OpenAI's chat completions endpoint to improve punctuation and register. That request also goes directly from your device to OpenAI using the API key you provide.</p>
+
+  <h2>Local Conversation History</h2>
+  <p>Conversation transcripts may be saved locally on your device so you can review prior sessions. These saved sessions are not uploaded to a developer-operated server. You can delete them from within the app.</p>
+
+  <h2>Children</h2>
+  <p>BabelTable is not directed to children and does not knowingly collect personal information from children.</p>
+
+  <h2>Changes</h2>
+  <p>If this policy changes, the updated version will be published on this page with a new "last updated" date.</p>
+
+  <h2>Contact</h2>
+  <p>For privacy questions or support, open an issue at <a href="https://github.com/everettjf/babeltable/issues">github.com/everettjf/babeltable/issues</a>.</p>
+
+  <footer>
+    <p><a href="./">← BabelTable</a></p>
+  </footer>
+</main>
+</body>
+</html>

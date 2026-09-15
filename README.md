@@ -15,7 +15,7 @@ OpenAI's `gpt-realtime-translate`.
 [![UI](https://img.shields.io/badge/UI-SwiftUI-brightgreen.svg)](https://developer.apple.com/xcode/swiftui/)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)](LICENSE)
 
-**[🌐 Visit the website →](https://xnu.app/BabelTable/)**
+**[🌐 Visit the website →](https://xnu.app/babeltable/)**
 
 </div>
 
