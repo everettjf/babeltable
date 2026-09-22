@@ -23,7 +23,7 @@ Updated: 2026-09-22. This checklist supersedes completion percentages in the his
 - Final source verification: 57 XCTest + 1 Swift Testing tests passed on the iPhone 17 simulator; final Release simulator build passed. Result bundle: `/tmp/babeltable-turn-order.xcresult` on the verification host.
 - Twelve UIKit-hosted layout attachments cover Home, Onboarding, Settings, and Privacy at iPhone/iPad point sizes plus accessibility text size. Visual review found and fixed truncated language/status controls at large text sizes. These are rendered layout checks, not a physical iPad or VoiceOver interaction pass.
 - The layout test also passed on the iPad Air 11-inch (M4) simulator; Home and Privacy attachments were visually reviewed at 2048 × 2732 pixels.
-- The final physical-device rerun is waiting for the owner to unlock Everett iPhone 27. An earlier 55-test physical-device run passed; it does not substitute for the final rerun after lifecycle follow-up changes.
+- The follow-up physical-device rerun ended with a test-runner launch failure after waiting for Everett iPhone 27 to be unlocked (lost pending connection before launch). It did not verify the final source. An earlier 55-test physical-device run passed; it does not substitute for a final rerun after lifecycle and turn-order changes.
 - Xcode device interaction requires first-time approval in the Xcode MCP menu. This is pending; no in-app interaction/real microphone acceptance is claimed.
 
 The repository has no source-controlled app-test workflow. GitHub exposes a Pages deployment workflow; its result is checked after push. Local Xcode tests are the application verification gate.
