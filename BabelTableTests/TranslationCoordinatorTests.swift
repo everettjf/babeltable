@@ -226,6 +226,21 @@ final class TranslationCoordinatorTests: XCTestCase {
         XCTAssertEqual(coordinator.displayedPrimaryLanguage.code, "ja")
     }
 
+    func testConsecutiveSameLanguageTurnsDoNotStealEachOthersTranslation() async {
+        await startLive()
+        sockets[0].emit(.inputDelta("Hello there"))
+        await settle()
+        sockets[1].emit(.outputDelta("你好"))
+        await settle()
+        date += 3
+        sockets[0].emit(.inputDelta("Thank you"))
+        await settle()
+        sockets[1].emit(.outputDelta("谢谢"))
+        await settle()
+        coordinator.stop()
+        XCTAssertEqual(store.sessions.first?.chatTurns?.map(\.translatedText), ["你好", "谢谢"])
+    }
+
     func testRapidLanguageChangeStartsAnotherTurn() async {
         await startLive()
         sockets[0].emit(.inputDelta("Hello there"))

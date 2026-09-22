@@ -289,6 +289,7 @@ final class TranslationCoordinator {
         captureGeneration = UUID()
         audioReady = false
         openOutputs = [:]
+        openOutputTimes = [:]
         pendingOutputs = [:]
         let sessionLanguages = SessionLanguagePair(
             primary: settings.primaryLanguageCode,
@@ -658,6 +659,7 @@ final class TranslationCoordinator {
         openTurn = nil
         openTurnTranslatedFromPanel = nil
         openOutputs = [:]
+        openOutputTimes = [:]
         pendingOutputs = [:]
         primaryTranslator?.close()
         secondaryTranslator?.close()
@@ -817,7 +819,7 @@ final class TranslationCoordinator {
                 }
                 drainingTurn = closing
                 drainingTurnTranslatedFromPanel = openTurnTranslatedFromPanel
-                drainingTurnLastOutputAt = now
+                drainingTurnLastOutputAt = openTurnTranslatedFromPanel.flatMap { openOutputTimes[$0] } ?? now
             }
             openTurn = ChatTurn(
                 startedAt: now,
@@ -827,6 +829,7 @@ final class TranslationCoordinator {
                 translatedText: ""
             )
             openOutputs = pendingOutputs
+            openOutputTimes = Dictionary(uniqueKeysWithValues: pendingOutputs.keys.map { ($0, now) })
             pendingOutputs = [:]
             openTurnTranslatedFromPanel = nil
         } else {
@@ -838,6 +841,7 @@ final class TranslationCoordinator {
     }
 
     private var openOutputs: [Panel: String] = [:]
+    private var openOutputTimes: [Panel: Date] = [:]
     private var pendingOutputs: [Panel: String] = [:]
 
     private func resolveOpenTurnRoute() {
@@ -881,6 +885,7 @@ final class TranslationCoordinator {
         // Keep both outputs until the source language settles, including short
         // utterances and output arriving before the first input transcript.
         openOutputs[panel, default: ""] += delta
+        openOutputTimes[panel] = now
         if let route = openTurnTranslatedFromPanel { openTurn?.translatedText = openOutputs[route] ?? "" }
     }
 
