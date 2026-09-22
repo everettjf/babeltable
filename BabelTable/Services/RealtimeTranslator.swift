@@ -65,6 +65,11 @@ nonisolated final class RealtimeTranslator: @unchecked Sendable {
     }
 
     nonisolated func connect() {
+        sendQueue.async { [weak self] in self?.connectOnQueue() }
+    }
+
+    private func connectOnQueue() {
+        guard task == nil else { return }
         onEvent(.state(.connecting))
         diagLog(.info, tag: logTag, "Connecting → target=\(targetLanguageCode), noiseReduction=\(noiseReduction.rawValue)")
 
@@ -105,15 +110,15 @@ nonisolated final class RealtimeTranslator: @unchecked Sendable {
     }
 
     nonisolated func close() {
-        diagLog(.info, tag: logTag, "Closing")
-        stopPingTimer()
-        receiveLoop?.cancel()
-        receiveLoop = nil
-        // Best-effort: send session.close, then close the socket.
-        send(json: ["type": "session.close"])
-        task?.cancel(with: .normalClosure, reason: nil)
-        task = nil
-        onEvent(.state(.closed))
+        sendQueue.async { [self] in
+            self.stopPingTimer()
+            self.receiveLoop?.cancel()
+            self.receiveLoop = nil
+            self.task?.cancel(with: .normalClosure, reason: nil)
+            self.task = nil
+            self.session.invalidateAndCancel()
+            self.onEvent(.state(.closed))
+        }
     }
 
     /// Send a PCM16 24kHz mono audio chunk. Hops off the real-time audio
@@ -148,7 +153,7 @@ nonisolated final class RealtimeTranslator: @unchecked Sendable {
             // Suppress URL-cancelled errors from intentional close().
             if Self.isCancellationError(error) { return }
             let ns = error as NSError
-            diagLog(.error, tag: self.logTag, "Send failed: \(error.localizedDescription) (domain=\(ns.domain), code=\(ns.code))")
+            diagLog(.error, tag: self.logTag, "Send failed (code=\(ns.code))")
             self.onEvent(.error(message: "Send failed: \(error.localizedDescription)", code: nil))
         }
     }
@@ -160,12 +165,12 @@ nonisolated final class RealtimeTranslator: @unchecked Sendable {
         timer.setEventHandler { [weak self] in
             guard let self, let task = self.task else { return }
             task.sendPing { [weak self] error in
-                guard let self, let error else { return }
+                guard let self, error != nil else { return }
                 // A ping we can't even send means the socket is silently dead
                 // (NAT timeout etc.) — surface it so the coordinator reconnects
                 // instead of sitting "Live" on a dead connection.
-                diagLog(.error, tag: self.logTag, "Ping failed: \(error.localizedDescription)")
-                self.onEvent(.state(.failed("Ping failed: \(error.localizedDescription)")))
+                diagLog(.error, tag: self.logTag, "Connection heartbeat failed")
+                self.onEvent(.state(.failed("Connection heartbeat failed")))
             }
         }
         pingTimer = timer
@@ -185,17 +190,17 @@ nonisolated final class RealtimeTranslator: @unchecked Sendable {
 
     nonisolated private func startReceiveLoop() {
         receiveLoop?.cancel()
+        guard let socket = task else { return }
         receiveLoop = Task { [weak self] in
             guard let self else { return }
             while !Task.isCancelled {
-                guard let task = self.task else { break }
                 do {
-                    let msg = try await task.receive()
+                    let msg = try await socket.receive()
                     self.handle(message: msg)
                 } catch {
                     if !Task.isCancelled, !Self.isCancellationError(error) {
                         let ns = error as NSError
-                        diagLog(.error, tag: self.logTag, "Receive failed: \(error.localizedDescription) (domain=\(ns.domain), code=\(ns.code))")
+                        diagLog(.error, tag: self.logTag, "Receive failed (code=\(ns.code))")
                         self.onEvent(.state(.failed(error.localizedDescription)))
                     } else {
                         diagLog(.info, tag: self.logTag, "Receive loop ended (cancelled)")
@@ -218,7 +223,9 @@ nonisolated final class RealtimeTranslator: @unchecked Sendable {
               let type = obj["type"] as? String else { return }
 
         switch type {
-        case "session.created", "session.updated":
+        case "session.created":
+            break // Configuration must be acknowledged before accepting audio.
+        case "session.updated":
             diagLog(.info, tag: logTag, type)
             onEvent(.state(.ready))
         case "session.closed":
@@ -239,20 +246,24 @@ nonisolated final class RealtimeTranslator: @unchecked Sendable {
             let err = obj["error"] as? [String: Any]
             let msg = err?["message"] as? String ?? "Unknown error"
             let code = err?["code"] as? String ?? err?["type"] as? String
-            // Capture the full server payload so rate-limit / quota / model
-            // errors land in the log with their code + type, not just message.
-            let detail = Self.compactJSON(obj) ?? text
-            diagLog(.error, tag: logTag, "server error: \(detail)")
-            onEvent(.error(message: msg, code: code))
+            let safeCode = Self.safeErrorCode(code, message: msg)
+            diagLog(.error, tag: logTag, "Server rejected request: \(safeCode)")
+            onEvent(.error(message: "The translation service rejected the request. Check your key's realtime model access and billing.", code: safeCode))
         default:
             // Unknown / unhandled event types are rare but useful when
             // debugging API changes.
-            diagLog(.info, tag: logTag, "event \(type)")
+            break
         }
     }
 
-    nonisolated private static func compactJSON(_ obj: [String: Any]) -> String? {
-        guard let data = try? JSONSerialization.data(withJSONObject: obj, options: []) else { return nil }
-        return String(data: data, encoding: .utf8)
+    /// Only fixed categories may enter diagnostics, never remote payload text.
+    nonisolated static func safeErrorCode(_ code: String?, message: String) -> String {
+        switch code {
+        case "insufficient_quota", "billing_hard_limit_reached": return "insufficient_quota"
+        case "invalid_api_key", "invalid_authentication": return "invalid_api_key"
+        case "rate_limit_exceeded": return "rate_limit_exceeded"
+        case "invalid_request_error" where message.lowercased().contains("api key"): return "invalid_api_key"
+        default: return "service_error"
+        }
     }
 }

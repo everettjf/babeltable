@@ -104,7 +104,7 @@ struct OnboardingView: View {
                     icon: "creditcard.fill",
                     color: .orange,
                     title: "Pricing",
-                    message: "About **$0.07 per minute** of conversation. We run two parallel translation sessions (one per language) so live audio is billed twice — that's the OpenAI list price, not a BabelTable markup."
+                    message: "About **$0.07 per minute** of conversation. We run two parallel translation sessions (one per language) so live audio is billed twice — this is an estimate, not a bill. Optional refinement costs extra."
                 )
                 InfoBox(
                     icon: "lock.shield.fill",
@@ -238,6 +238,13 @@ struct OnboardingView: View {
             .tint(BabelTheme.primary)
             .disabled(!primaryActionEnabled)
 
+            Button("Set up later") {
+                settings.hasCompletedOnboarding = true
+                dismiss()
+            }
+            .accessibilityIdentifier("onboarding.skip")
+            .disabled(isTestingKey)
+
             if step > 0 {
                 Button {
                     withAnimation(.easeInOut(duration: 0.25)) { step -= 1 }
@@ -269,7 +276,7 @@ struct OnboardingView: View {
         case 0: "Continue"
         case 1: "Next: add your key"
         case 2: isTestingKey ? "Testing connection…" : "Test connection & continue"
-        default: "Start translating"
+        default: "Done"
         }
     }
 
@@ -290,7 +297,12 @@ struct OnboardingView: View {
             Task { @MainActor in
                 switch await APIKeyValidator.validate(key) {
                 case .valid:
-                    settings.apiKey = key
+                    do { try settings.saveAPIKey(key) }
+                    catch {
+                        keyTestError = error.localizedDescription
+                        isTestingKey = false
+                        return
+                    }
                     isTestingKey = false
                     withAnimation(.easeInOut(duration: 0.3)) { step += 1 }
                 case .invalid:

@@ -91,16 +91,15 @@ Then in Xcode:
    `com.xnu.babeltable` — change it to your own).
 2. Build and run on a **physical device** — the iOS Simulator cannot capture
    microphone audio.
-3. On first launch, open **Settings** and paste your OpenAI API key (stored in
-   the Keychain), then pick the two languages.
-4. Tap **Start** and talk.
+3. On first launch, configure your OpenAI API key (stored in Keychain) and two different languages, or choose **Set up later** to browse the app.
+4. Tap **Start**, read and accept the OpenAI data-sharing notice, and wait for **Live** before speaking. Both speakers should agree to recording.
 
 ## BYOK & cost
 
 BabelTable has no subscription and no backend. You bring your own OpenAI API key
 and pay OpenAI directly for realtime audio usage. Because translation runs as
 two concurrent realtime sessions, expect roughly double the per-minute audio
-cost of a single session. The app tracks usage locally so you can keep an eye on it.
+cost of a single session. The app tracks session duration locally as an estimate, including time spent paused. OpenAI billing is authoritative. Optional refinement makes separate paid text requests and is off for new installations.
 
 ## Architecture
 
@@ -126,13 +125,13 @@ are auto-reconnected with exponential backoff.
 
 ## Testing
 
-Unit tests cover error classification and reconnect backoff:
+Unit tests cover complete coordinator state transitions using injected audio and connections, draft recovery, save failure and retry, short utterances, error classification, and reconnect backoff:
 
 ```bash
 xcodebuild test \
   -project BabelTable.xcodeproj \
   -scheme BabelTable \
-  -destination 'platform=iOS Simulator,name=iPhone 16'
+  -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
 
 ## Deployment
@@ -140,8 +139,7 @@ xcodebuild test \
 `deploy.sh` bumps the build number, archives, and uploads to TestFlight:
 
 ```bash
-export APPLE_ID="you@example.com"
-export APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"   # appleid.apple.com → App-Specific Passwords
+source ~/.zshrc   # supplies APPLE_ID and APP_SPECIFIC_PASSWORD
 ./deploy.sh
 ```
 
@@ -149,7 +147,7 @@ export APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"   # appleid.apple.com → App
 
 BabelTable collects no personal data through any developer-operated server. Your
 API key stays in the Keychain, audio goes directly to OpenAI, and transcripts
-are saved only on your device. Full policy: [PRIVACY.md](PRIVACY.md).
+are saved in local app storage (which iOS device backups may include). Full policy: [PRIVACY.md](PRIVACY.md).
 
 ## Contributing
 
@@ -163,3 +161,7 @@ Released under the [MIT License](LICENSE).
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=everettjf/babeltable&type=Date)](https://star-history.com/#everettjf/babeltable&Date)
+
+## Release validation
+
+See [the 1.0 closeout checklist](docs/APP_STORE_CLOSEOUT.md) for verified engineering results, remaining physical-device speech acceptance, and App Review setup. Wait for **Live** before speaking; audio during a connection pause is not queued or translated. Turn matching uses timing and language detection, so simultaneous speech and closely overlapping translations still require real-device acceptance.

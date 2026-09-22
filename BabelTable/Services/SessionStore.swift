@@ -43,28 +43,32 @@ final class SessionStore {
         sessions = loaded.sorted { $0.startedAt > $1.startedAt }
     }
 
-    func save(_ session: ChatSession) {
+    @discardableResult
+    func save(_ session: ChatSession) -> Bool {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.prettyPrinted]
         let url = folderURL.appendingPathComponent("\(session.id.uuidString).json")
         do {
+            try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
             let data = try encoder.encode(session)
             try data.write(to: url, options: [.atomic])
         } catch {
             // A silently lost session is the worst failure mode for an
             // archive — at least surface it in the diagnostics log.
             diagLog(.error, tag: "Store", "Failed to save session \(session.id.uuidString): \(error.localizedDescription)")
-            return
+            return false
         }
         if let idx = sessions.firstIndex(where: { $0.id == session.id }) {
             sessions[idx] = session
         } else {
             sessions.insert(session, at: 0)
         }
+        return true
     }
 
-    func delete(_ session: ChatSession) {
+    @discardableResult
+    func delete(_ session: ChatSession) -> Bool {
         let url = folderURL.appendingPathComponent("\(session.id.uuidString).json")
         do {
             if FileManager.default.fileExists(atPath: url.path) {
@@ -72,8 +76,9 @@ final class SessionStore {
             }
         } catch {
             diagLog(.error, tag: "Store", "Failed to delete session \(session.id.uuidString): \(error.localizedDescription)")
-            return
+            return false
         }
         sessions.removeAll { $0.id == session.id }
+        return true
     }
 }

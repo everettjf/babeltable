@@ -20,12 +20,13 @@ final class UsageTracker {
 
     private(set) var entries: [DailyUsage] = []
 
-    private let fileURL: URL = {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        return docs.appendingPathComponent("usage.json")
-    }()
+    private let fileURL: URL
 
-    init() { load() }
+    init(fileURL: URL? = nil) {
+        self.fileURL = fileURL ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("usage.json")
+        load()
+    }
 
     // MARK: - Public API
 

@@ -1,29 +1,37 @@
 # BabelTable Privacy Policy
 
-Last updated: May 31, 2026
+Last updated: September 22, 2026
 
-BabelTable is a bring-your-own-key real-time translation app.
+BabelTable is a bring-your-own-key app for live, face-to-face translation.
 
-## Data We Collect
+## Your choice
 
-BabelTable does not collect, sell, or share personal data through a developer-operated server.
+Before the first translation, BabelTable explains what is sent to OpenAI and asks for your explicit permission. Declining leaves history and settings available. You can withdraw permission in Settings → Privacy and OpenAI permission. This stops translation and prevents new translation requests until you agree again. Make sure both people agree before recording a conversation.
 
-## OpenAI API Key
+## OpenAI processing
 
-Your OpenAI API key is stored locally on your device in the iOS Keychain. BabelTable does not send your API key to any server controlled by the developer.
+During translation, microphone audio is sent directly from your device to OpenAI for transcription and translation, authenticated with your API key. Two realtime connections process the audio, one for each target language. BabelTable has no developer-operated server and does not sell your information or use advertising or tracking SDKs.
 
-## Speech and Translation
+Optional translation refinement is off for new installations. If you enable it in Advanced settings, the source text, draft translation, up to three earlier conversation turns, and your glossary are sent directly to OpenAI's text API. These are separate billed requests. Existing users' refinement preferences are preserved.
 
-When you start a translation session, audio is sent directly from the app to OpenAI's realtime translation service using the API key you provide. OpenAI processes that audio to provide transcription and translation responses.
+OpenAI's processing and retention are governed by your OpenAI account and applicable terms. Withdrawing permission in BabelTable prevents future requests; it does not delete data already processed by OpenAI. See the [OpenAI Privacy Policy](https://openai.com/policies/privacy-policy/).
 
-Translation refinement is on by default and can be turned off in Settings. When it is enabled, the transcript text for each finished turn is additionally sent to OpenAI's chat completions endpoint to improve punctuation and register. That request also goes directly from your device to OpenAI using the API key you provide.
+## API key
 
-## Local Conversation History
+Your key is stored in the iOS Keychain and used only to authenticate requests to OpenAI. Saving a key makes an authentication request to OpenAI; this does not send conversation audio or text. Authentication does not guarantee realtime model access or available credit. You can delete the key in Settings without deleting conversation history. Newly saved keys use device-only Keychain protection.
 
-Conversation transcripts may be saved locally on your device so you can review prior sessions. These saved sessions are not uploaded to a developer-operated server.
+## Local history and backups
 
-## Contact
+BabelTable does not save raw microphone audio. It saves conversation transcripts and translations in its local app storage, including periodic drafts while a conversation is active. iOS device backups may include these files. The app does not operate its own cloud sync or upload history to a developer server.
 
-For privacy questions or support, open an issue at:
+History can be read, shared, and deleted in the app. Deletion removes the local conversation file; separately shared copies and older device backups are not removed by the app. Sharing creates a temporary UTF-8 text file and sends it only to the destination you select in the system share sheet.
 
-https://github.com/everettjf/BabelTable/issues
+## Diagnostics and usage
+
+The app keeps a bounded local diagnostic log of connection states and error categories. New diagnostic entries do not include API keys, raw audio, conversation text, or complete server error payloads. You choose whether to share or clear diagnostics in Advanced settings.
+
+Session duration and estimated usage are stored locally. These are estimates rather than OpenAI billing records; optional refinement is billed separately.
+
+## Support
+
+For support or privacy questions, [open an issue](https://github.com/everettjf/babeltable/issues). Do not include API keys, private conversations, or audio in a public issue.

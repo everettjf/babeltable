@@ -4,6 +4,7 @@ struct ArchiveView: View {
     @Environment(SessionStore.self) private var store
     @Environment(\.dismiss) private var dismiss
 
+    @State private var deleteFailed = false
     @State private var selection: ChatSession?
     @State private var searchText = ""
     @State private var deleteCandidate: ChatSession?
@@ -14,11 +15,15 @@ struct ArchiveView: View {
         } detail: {
             detail
         }
+        .alert("Could not delete conversation", isPresented: $deleteFailed) {
+            Button("OK", role: .cancel) {}
+        } message: { Text("The conversation is still saved. Please try again.") }
         .confirmationDialog("Delete this conversation?", isPresented: deleteBinding, titleVisibility: .visible) {
             Button("Delete conversation", role: .destructive) {
                 guard let deleteCandidate else { return }
-                if selection?.id == deleteCandidate.id { selection = nil }
-                store.delete(deleteCandidate)
+                if store.delete(deleteCandidate) {
+                    if selection?.id == deleteCandidate.id { selection = nil }
+                } else { deleteFailed = true }
                 self.deleteCandidate = nil
             }
             Button("Cancel", role: .cancel) { deleteCandidate = nil }
@@ -76,7 +81,7 @@ struct ArchiveView: View {
     @ViewBuilder
     private var detail: some View {
         if let selection {
-            SessionDetailView(session: selection)
+            SessionDetailView(session: store.sessions.first(where: { $0.id == selection.id }) ?? selection)
         } else {
             ContentUnavailableView(
                 "Select a conversation",

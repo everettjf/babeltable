@@ -106,9 +106,11 @@ enum Formality: String, Codable, Sendable, CaseIterable, Identifiable {
 @Observable
 @MainActor
 final class AppSettings {
-    private let defaults = UserDefaults.standard
+    private let defaults: UserDefaults
+    private let keychain: KeychainStore
 
     private enum Keys {
+        static let aiConsent = "aiConsentVersion"
         static let primaryLanguage = "primaryLanguage"
         static let secondaryLanguage = "secondaryLanguage"
         static let displayMode = "displayMode"
@@ -122,6 +124,12 @@ final class AppSettings {
         static let formality = "formality"
         static let glossaryText = "glossaryText"
     }
+
+    static let currentConsentVersion = 1
+    var aiConsentVersion: Int {
+        didSet { defaults.set(aiConsentVersion, forKey: Keys.aiConsent) }
+    }
+    var hasAIConsent: Bool { aiConsentVersion == Self.currentConsentVersion }
 
     var primaryLanguageCode: String {
         didSet { defaults.set(primaryLanguageCode, forKey: Keys.primaryLanguage) }
@@ -181,19 +189,22 @@ final class AppSettings {
     /// stored property instead — it updates whenever the key is set.
     private(set) var hasAPIKey: Bool
 
-    var apiKey: String {
-        get { KeychainStore.shared.apiKey ?? "" }
-        set {
-            if newValue.isEmpty {
-                KeychainStore.shared.deleteAPIKey()
-            } else {
-                KeychainStore.shared.apiKey = newValue
-            }
-            hasAPIKey = !newValue.isEmpty
-        }
+    var apiKey: String { keychain.apiKey ?? "" }
+
+    func saveAPIKey(_ value: String) throws {
+        try keychain.save(value)
+        hasAPIKey = !(keychain.apiKey ?? "").isEmpty
     }
 
-    init() {
+    func deleteAPIKey() throws {
+        try keychain.deleteAPIKey()
+        hasAPIKey = false
+    }
+
+    init(defaults: UserDefaults = .standard, keychain: KeychainStore = .shared) {
+        self.defaults = defaults
+        self.keychain = keychain
+        self.aiConsentVersion = defaults.integer(forKey: Keys.aiConsent)
         self.primaryLanguageCode = defaults.string(forKey: Keys.primaryLanguage) ?? "en"
         self.secondaryLanguageCode = defaults.string(forKey: Keys.secondaryLanguage) ?? "zh"
         let modeRaw = defaults.string(forKey: Keys.displayMode) ?? DisplayMode.chat.rawValue
@@ -211,13 +222,13 @@ final class AppSettings {
         self.primarySpeakerName = defaults.string(forKey: Keys.primarySpeakerName) ?? "You"
         self.secondarySpeakerName = defaults.string(forKey: Keys.secondarySpeakerName) ?? "Them"
 
-        // Default on; `object(forKey:)` distinguishes "never set" from an
+        // Default off; `object(forKey:)` distinguishes "never set" from an
         // explicit false so a returning user's choice is respected.
-        self.refineEnabled = (defaults.object(forKey: Keys.refineEnabled) as? Bool) ?? true
+        self.refineEnabled = (defaults.object(forKey: Keys.refineEnabled) as? Bool) ?? false
         let formalityRaw = defaults.string(forKey: Keys.formality) ?? Formality.auto.rawValue
         self.formality = Formality(rawValue: formalityRaw) ?? .auto
         self.glossaryText = defaults.string(forKey: Keys.glossaryText) ?? ""
-        self.hasAPIKey = !(KeychainStore.shared.apiKey ?? "").isEmpty
+        self.hasAPIKey = !(keychain.apiKey ?? "").isEmpty
     }
 
     var primaryLanguage: Language {

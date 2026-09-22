@@ -26,7 +26,7 @@ struct SessionDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                ShareLink(item: transcriptText, subject: Text("BabelTable Conversation")) {
+                ShareLink(item: ConversationExport(text: transcriptText), preview: SharePreview("BabelTable Conversation")) {
                     Image(systemName: "square.and.arrow.up")
                 }
                 .accessibilityLabel("Share conversation as text")

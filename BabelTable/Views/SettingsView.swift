@@ -12,6 +12,8 @@ struct SettingsView: View {
     @State private var isTestingKey = false
     @State private var keyTestError: String?
     @State private var showOnboarding = false
+    @State private var confirmDeleteKey = false
+    @State private var showPrivacy = false
     @State private var confirmResetUsage = false
 
     var body: some View {
@@ -19,26 +21,7 @@ struct SettingsView: View {
 
         Form {
             Section {
-                HStack(spacing: 14) {
-                    Image(systemName: "slider.horizontal.3")
-                        .font(.title2.weight(.semibold))
-                        .foregroundStyle(BabelTheme.primary)
-                        .frame(width: 46, height: 46)
-                        .background(BabelTheme.primarySoft, in: .rect(cornerRadius: BabelTheme.smallRadius))
-                        .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("Conversation setup")
-                            .font(.headline)
-                        Text("Choose the essentials here. Advanced translation and audio controls are further below.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .padding(.vertical, 4)
-            }
-
-            Section {
-                Label(settings.hasAPIKey ? "API key ready" : "API key required",
+                Label(settings.hasAPIKey ? "API key saved" : "API key required",
                       systemImage: settings.hasAPIKey ? "checkmark.shield.fill" : "exclamationmark.shield.fill")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(settings.hasAPIKey ? BabelTheme.local : BabelTheme.warning)
@@ -68,6 +51,10 @@ struct SettingsView: View {
                     .disabled(apiKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isTestingKey)
                 }
 
+                if settings.hasAPIKey {
+                    Button("Delete API key", role: .destructive) { confirmDeleteKey = true }
+                        .disabled(isTestingKey)
+                }
                 if let keyTestError {
                     Label(keyTestError, systemImage: "exclamationmark.triangle.fill")
                         .font(.caption)
@@ -81,7 +68,7 @@ struct SettingsView: View {
             } header: {
                 Label("Connection", systemImage: "key.fill")
             } footer: {
-                Text("Tested against OpenAI before saving, then stored securely in the iOS Keychain on this device.")
+                Text("Stored in this device’s Keychain after an authentication check. Realtime model access and available credit are checked when translation starts.")
             }
 
             Section {
@@ -100,32 +87,34 @@ struct SettingsView: View {
             } footer: {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Two simultaneous translation sessions run — one for each language. The model auto-detects who is speaking which.")
-                    if coordinator.status == .running || coordinator.status == .reconnecting {
+                    if settings.primaryLanguageCode == settings.secondaryLanguageCode {
+                        Text("Choose two different languages.").foregroundStyle(.red)
+                    }
+                    if coordinator.isSessionActive {
                         Text("A session is live — language changes take effect on the next session.")
                     }
                 }
             }
 
-            labelsSection
-
             layoutSection
-
-            refinementSection
-
-            audioRecognitionSection
-
             usageSection
-
             Section {
-                NavigationLink {
-                    DiagnosticsView()
-                } label: {
-                    Label("Logs", systemImage: "doc.text.magnifyingglass")
+                NavigationLink("Advanced settings") {
+                    Form {
+                        labelsSection
+                        refinementSection
+                        audioRecognitionSection
+                        Section {
+                            NavigationLink("Diagnostics") { DiagnosticsView() }
+                            LabeledContent("Model", value: "gpt-realtime-translate")
+                        }
+                    }
+                    .navigationTitle("Advanced")
                 }
-            } header: {
-                Label("Diagnostics", systemImage: "stethoscope")
-            } footer: {
-                Text("Connection events and detailed error messages from the translation service. Helpful when a session unexpectedly stops.")
+            }
+            Section {
+                Button("Privacy and OpenAI permission") { showPrivacy = true }
+                Link("Privacy Policy", destination: URL(string: "https://github.com/everettjf/babeltable/blob/main/PRIVACY.md")!)
             }
 
             Section {
@@ -155,9 +144,7 @@ struct SettingsView: View {
                 }
                 .padding(.vertical, 2)
 
-                LabeledContent("Model", value: "gpt-realtime-translate")
-                LabeledContent("Sample rate", value: "24 kHz PCM16")
-                LabeledContent("List price", value: priceString(UsageTracker.pricePerMinute) + " / min")
+
             } header: {
                 Label("About", systemImage: "info.circle")
             }
@@ -170,7 +157,19 @@ struct SettingsView: View {
             apiKeyDraft = settings.apiKey
             keyTestError = nil
         }
-        .onChange(of: apiKeyDraft) { keyTestError = nil }
+        .onChange(of: apiKeyDraft) { keyTestError = nil; saved = false }
+        .sheet(isPresented: $showPrivacy) { AIConsentView() }
+        .confirmationDialog("Delete your API key?", isPresented: $confirmDeleteKey, titleVisibility: .visible) {
+            Button("Delete key", role: .destructive) {
+                coordinator.stop()
+                do {
+                    try settings.deleteAPIKey()
+                    apiKeyDraft = ""
+                    saved = false
+                } catch { keyTestError = error.localizedDescription }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: { Text("Translation will stop. Your saved conversations will remain available.") }
         .fullScreenCover(isPresented: $showOnboarding) {
             OnboardingView()
         }
@@ -366,7 +365,12 @@ struct SettingsView: View {
         Task { @MainActor in
             switch await APIKeyValidator.validate(key) {
             case .valid:
-                settings.apiKey = key
+                do { try settings.saveAPIKey(key) }
+                catch {
+                    keyTestError = error.localizedDescription
+                    isTestingKey = false
+                    return
+                }
                 saved = true
                 isTestingKey = false
                 try? await Task.sleep(for: .seconds(1.5))

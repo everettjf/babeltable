@@ -35,13 +35,10 @@ struct BabelTableApp: App {
         }
     }
 
-    /// Re-show onboarding on launch when either:
-    ///   - the user has never finished it, or
-    ///   - they have no API key stored (e.g. cleared it from Settings, or
-    ///     installed onto a new device where the Keychain item is missing).
+    /// Browsing history and configuring the app never require an API key.
     private var needsOnboarding: Binding<Bool> {
         Binding(
-            get: { !settings.hasCompletedOnboarding || !settings.hasAPIKey },
+            get: { !settings.hasCompletedOnboarding },
             set: { newValue in
                 if !newValue { settings.hasCompletedOnboarding = true }
             }
