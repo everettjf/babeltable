@@ -36,6 +36,7 @@ blue()   { printf "\033[34m%s\033[0m\n" "$*"; }
 # 1. Pre-flight checks.
 # ──────────────────────────────────────────────────────────────────────────────
 : "${APPLE_ID:?APPLE_ID is required (e.g. export APPLE_ID=\"you@example.com\")}"
+APP_SPECIFIC_PASSWORD="${APP_SPECIFIC_PASSWORD:-${APPLE_SPECIFIC_PASSWORD:-}}"
 : "${APP_SPECIFIC_PASSWORD:?APP_SPECIFIC_PASSWORD is required (generate at appleid.apple.com)}"
 
 if [[ ! -d "$PROJECT" ]]; then
