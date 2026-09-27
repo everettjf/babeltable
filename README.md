@@ -37,7 +37,7 @@ xcodebuild -project BabelTable.xcodeproj -scheme BabelTable \
 
 The local pipeline uses iOS 27's AnalyzerInputConverter and the new audio-session deactivation/resumption notifications. Installed-only TranslationSession instances use the low-latency strategy; runtime startup never requests model downloads or falls back to a remote service.
 
-Deterministic tests inject audio and local engines to verify cancellation, phrase ownership, direction switching, final draining, model errors, interruption recovery, draft persistence, and save retry. Apple's actual speech/translation models and audio routes require a physical device; simulator tests do not establish translation accuracy. See [release validation](docs/APP_STORE_CLOSEOUT.md).
+Deterministic tests inject audio and local engines to verify cancellation, phrase ownership, direction switching, final draining, model errors, interruption recovery, draft persistence, and save retry. Apple's actual speech/translation models and audio routes require a physical device; simulator tests do not establish translation accuracy. Physical-device integration tests require prepared English/Chinese models and verify both translation directions plus synthetic speech on first start and restart, without opening the microphone. See [release validation](docs/APP_STORE_CLOSEOUT.md).
 
 ## Privacy
 

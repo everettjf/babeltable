@@ -17,7 +17,8 @@ Updated: September 27, 2026. This replaces the previous cloud-release checklist.
 ## Automated verification
 
 - iOS 27 simulator: lifecycle, archive compatibility, persistence failures/retry, and layout tests.
-- Device-only integration test: translates English/Chinese in both directions using installed models. It skips explicitly if assets are missing and never accesses the microphone or requests model downloads.
+- Device-only integration tests: translate English/Chinese in both directions and feed bundled synthetic English audio through a fresh speech engine twice, checking final recognition and translation after draining. Prepare English/Chinese assets before running; missing assets fail on physical devices. These tests skip on the simulator and never access the microphone or request model downloads.
+- Availability tests cover transient missing/unsupported responses, service recovery, stable missing assets, and cancellation. Negative checks are retried before reporting missing models; empty service catalogs and inconsistent results report temporary unavailability.
 - Physical-device test execution and exact results are recorded below after validation.
 
 ## Required physical acceptance before release
@@ -40,9 +41,9 @@ The bundled privacy manifest declares no developer-collected data. Confirm App S
 
 ## Verification results (2026-09-27)
 
-- Xcode 27.0 (27A266a), iPhone 17e / iOS 27 simulator: **28 tests executed, 27 passed, 1 explicitly skipped, 0 failures**. The skipped test requires physical-device translation assets.
+- Xcode 27.0 (27A266a), iPhone 17e / iOS 27 simulator: **34 tests executed, 32 passed, 2 explicitly skipped, 0 failures**. The skipped integration tests require physical-device speech/translation assets.
 - The audio converter test exercises the real iOS 27 converter with ten PCM16 chunks plus flush, checking that one second of input remains one second after resampling. A preliminary float-output test hit the framework's PCM16 precondition; the test now uses the required format and runtime validates the model format before creating the converter.
 - Exported and reviewed simulator screenshots of Settings and the large-text home screen; the layout suite renders iPhone, large-text iPhone, and iPad variants of Home, Settings, and onboarding.
 - Generic iOS **Release build succeeded** with signing disabled. The physical-device Debug test build also compiled and signed successfully.
-- Physical iPhone 17 Pro: the first device run completed after unlocking, with **27 tests executed, 26 passed, 1 skipped, 0 failures**. The installed-model test confirmed the English/Chinese pair is supported but reported **needsDownload**. A later run including the audio converter test was blocked by the device locking again. Actual microphone, airplane-mode translation, installed-model integration, and audio-route acceptance remain unverified. Prepare models and complete the checklist before release.
+- Physical iPhone 17 Pro with prepared English/Chinese models: **34 tests passed, 0 skipped, 0 failures**. This includes both translation directions and synthetic speech recognition/translation on first start and restart. During investigation, Apple’s translation service disconnected and its availability API returned unsupported; startup now retries negative checks and treats empty catalogs as temporarily unavailable. This does not establish that every reported download prompt had the same cause. A second run of both device integration tests also passed. Actual microphone input, airplane-mode operation, and audio-route acceptance remain unverified; complete the checklist before release.
 - No TestFlight upload performed.

@@ -23,6 +23,7 @@ final class OfflineTranslator: OfflineTranslating {
         switch await OfflineModels.status(for: pair) {
         case .unsupported: throw OfflineError.unsupported
         case .needsDownload: throw OfflineError.modelsMissing
+        case .unavailable: throw OfflineError.modelsUnavailable
         case .ready: break
         }
         guard token == generation else { throw CancellationError() }

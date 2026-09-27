@@ -261,7 +261,7 @@ struct HomeView: View {
 
     private var statusText: String {
         switch coordinator.status {
-        case .idle: "Ready"
+        case .idle: "Not started"
         case .starting: "Preparing"
         case .running: "Live"
         case .paused: "Paused"
@@ -272,7 +272,7 @@ struct HomeView: View {
 
     private var statusSymbol: String {
         switch coordinator.status {
-        case .idle: "checkmark.circle.fill"
+        case .idle: "mic"
         case .starting: "cpu"
         case .running: "waveform"
         case .paused: "arrow.trianglehead.2.clockwise.rotate.90"
