@@ -4,11 +4,11 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>BabelTable — Real-time two-way speech translation</title>
-<meta name="description" content="Put your phone on the table and let two people talk in their own languages. BabelTable transcribes and translates both sides live, powered by OpenAI's gpt-realtime-translate." />
+<meta name="description" content="Put your phone on the table and let two people talk in their own languages. BabelTable transcribes and translates both sides live, using on-device Apple speech and translation models on iOS 27." />
 
 <!-- Open Graph / social -->
 <meta property="og:title" content="BabelTable — Real-time two-way speech translation" />
-<meta property="og:description" content="Two people, two languages, one phone on the table. Live, hands-free interpreting powered by OpenAI realtime." />
+<meta property="og:description" content="Two people, two languages, one phone on the table. Offline conversations using Apple speech and translation models." />
 <meta property="og:type" content="website" />
 <meta property="og:image" content="app-store-screenshots/BabelTable-01.png" />
 <meta name="theme-color" content="#34C759" />
@@ -291,7 +291,7 @@
       <a href="#how">How it works</a>
       <a href="#languages">Languages</a>
       <a href="#privacy">Privacy</a>
-      <a class="nav-cta" href="https://github.com/everettjf/BabelTable">View on GitHub ↗</a>
+      <a class="nav-cta" href="https://github.com/everettjf/babeltable">View on GitHub ↗</a>
     </div>
   </div>
 </nav>
@@ -300,11 +300,11 @@
 <header class="hero" id="top">
   <div class="wrap hero-grid">
     <div class="hero-copy">
-      <span class="pill"><span class="dot"></span> Powered by OpenAI gpt-realtime-translate</span>
+      <span class="pill"><span class="dot"></span> On-device translation · iOS 27</span>
       <h1>Two people.<br/>Two languages.<br/><span class="gradient-text">One phone on the table.</span></h1>
-      <p class="lead">BabelTable transcribes and translates both sides of a face-to-face conversation live — no turn-taking, no buttons to pass back and forth. Just talk.</p>
+      <p class="lead">BabelTable transcribes speech on your device and translates each completed phrase. Choose the speaking language and take turns — even in airplane mode after model setup.</p>
       <div class="btn-row">
-        <a class="btn btn-primary" href="https://github.com/everettjf/BabelTable">
+        <a class="btn btn-primary" href="https://github.com/everettjf/babeltable">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49v-1.7c-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.49-1.11-1.49-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05a9.4 9.4 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.94-2.35 4.81-4.58 5.06.36.32.68.94.68 1.9v2.82c0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.58 17.52 2 12 2Z"/></svg>
           Get the source
         </a>
@@ -312,12 +312,12 @@
       </div>
       <div class="hero-note">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4" stroke="#34c759" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="#34c759" stroke-width="2"/></svg>
-        Open source · MIT · Bring Your Own Key · No backend
+        Open source · MIT · Offline after model setup
       </div>
     </div>
 
     <div class="phones">
-      <div class="phone phone-back"><img src="app-store-screenshots/BabelTable-03.png" alt="BabelTable settings" loading="lazy" /></div>
+      <div class="phone phone-back"><img src="website-images/offline-welcome.png" alt="BabelTable offline setup guide" loading="lazy" /></div>
       <div class="phone phone-side"><img src="app-store-screenshots/BabelTable-02.png" alt="Side-by-side chat mode" loading="lazy" /></div>
       <div class="phone phone-main"><img src="app-store-screenshots/BabelTable-01.png" alt="Face-to-face translation mode" /></div>
 
@@ -327,7 +327,7 @@
       </div>
       <div class="float-card fc-2">
         <span class="ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 7h7l-2-2M20 17h-7l2 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        Both directions at once
+        Two-way, on device
       </div>
     </div>
   </div>
@@ -336,10 +336,10 @@
 <!-- ===== Stats strip ===== -->
 <div class="strip">
   <div class="wrap strip-inner">
-    <div class="stat"><div class="n gradient-text">13</div><div class="l">Languages</div></div>
-    <div class="stat"><div class="n gradient-text">2×</div><div class="l">Realtime sessions</div></div>
+    <div class="stat"><div class="n gradient-text">13</div><div class="l">Language choices</div></div>
+    <div class="stat"><div class="n gradient-text">27+</div><div class="l">iOS version</div></div>
     <div class="stat"><div class="n gradient-text">0</div><div class="l">Backend servers</div></div>
-    <div class="stat"><div class="n gradient-text">100%</div><div class="l">On-device key</div></div>
+    <div class="stat"><div class="n gradient-text">100%</div><div class="l">On-device translation</div></div>
   </div>
 </div>
 
@@ -355,7 +355,7 @@
       <div class="card reveal">
         <div class="ico ico-g"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M5 8v8M19 8v8M8.5 5.5v13M15.5 5.5v13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
         <h3>Live two-way translation</h3>
-        <p>Both directions stream simultaneously. The model auto-detects which language is being spoken from the audio — no manual switching.</p>
+        <p>Choose the speaking language, see progressive captions, and read the translation after each phrase. Switch languages when the other person speaks.</p>
       </div>
       <div class="card reveal">
         <div class="ico ico-b"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="7" rx="2" stroke="currentColor" stroke-width="2"/><rect x="3" y="13" width="18" height="7" rx="2" stroke="currentColor" stroke-width="2"/></svg></div>
@@ -365,7 +365,7 @@
       <div class="card reveal">
         <div class="ico ico-t"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 12c3 0 3-5 6-5s3 10 6 10 3-5 6-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
         <h3>Tuned for the room</h3>
-        <p>Microphone-scenario presets for phone-in-hand vs. on-the-table, plus optional auto-leveling to balance near and far speakers.</p>
+        <p>Optional microphone volume balancing helps when speakers sit at different distances. Speak one at a time for clear recognition.</p>
       </div>
       <div class="card reveal">
         <div class="ico ico-o"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 7l8-4 8 4-8 4-8-4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4 12l8 4 8-4M4 17l8 4 8-4" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></div>
@@ -375,12 +375,12 @@
       <div class="card reveal">
         <div class="ico ico-p"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
         <h3>Privacy by design</h3>
-        <p>Your API key lives in the iOS Keychain. Audio goes straight to OpenAI — nothing is routed through a developer-operated backend.</p>
+        <p>Audio and translations are processed on your device. No account or key is needed, and audio is never saved as a recording.</p>
       </div>
       <div class="card reveal">
         <div class="ico ico-r"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z" stroke="currentColor" stroke-width="2"/><path d="M12 8v4l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <h3>Built-in diagnostics</h3>
-        <p>A live log of the realtime connection makes debugging transparent, with automatic reconnection on transient socket failures.</p>
+        <p>Local diagnostics help investigate audio and storage problems. Conversation drafts are preserved when capture pauses.</p>
       </div>
     </div>
   </div>
@@ -391,23 +391,23 @@
   <div class="wrap">
     <div class="sec-head reveal">
       <div class="eyebrow">How it works</div>
-      <h2>From silence to conversation in three taps</h2>
+      <h2>Prepare once, then talk offline</h2>
     </div>
     <div class="steps">
       <div class="step reveal">
         <div class="num"></div>
-        <h3>Add your key &amp; pick languages</h3>
-        <p>Paste your OpenAI API key once — it’s stored in the Keychain — then choose your language and the other person’s.</p>
+        <h3>Choose and download languages</h3>
+        <p>Choose two languages in Settings and download their speech and translation models while online. Wait for Ready for offline use.</p>
       </div>
       <div class="step reveal">
         <div class="num"></div>
         <h3>Put the phone down</h3>
-        <p>Set it on the table between you and tap <b>Start</b>. BabelTable opens two realtime sessions, one per direction.</p>
+        <p>Set it on the table between you and tap <b>Start</b>. Wait for Live, then speak in the selected language.</p>
       </div>
       <div class="step reveal">
         <div class="num"></div>
-        <h3>Just talk, naturally</h3>
-        <p>Speak in your own language. Each side is transcribed and translated live and shown to the right person, the right way up.</p>
+        <h3>Take turns speaking</h3>
+        <p>Switch the speaking language for the other person. Each phrase is translated locally and shown to the right person, the right way up.</p>
       </div>
     </div>
   </div>
@@ -422,7 +422,7 @@
       <ul class="feature-list">
         <li><span class="check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span><b>Rotated panel</b> — the top half flips 180° so the other person reads it naturally without grabbing the phone.</span></li>
         <li><span class="check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span><b>Color-coded sides</b> — each speaker’s language has its own panel, so it’s always clear who said what.</span></li>
-        <li><span class="check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span><b>Hands-free</b> — no push-to-talk. The model figures out the source language from the audio.</span></li>
+        <li><span class="check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span><b>Choose the speaker</b> — select a language, speak, then switch for the other person.</span></li>
       </ul>
     </div>
     <div class="sc-media reveal">
@@ -454,8 +454,8 @@
   <div class="wrap">
     <div class="sec-head reveal">
       <div class="eyebrow">Supported languages</div>
-      <h2>Translate across 13 languages</h2>
-      <p>Every language offered by <code>gpt-realtime-translate</code>, ready out of the box.</p>
+      <h2>Prepare your language pair</h2>
+      <p>Availability depends on your device and Apple’s installed speech and translation models. Check your pair in Settings before traveling.</p>
     </div>
     <div class="langs reveal">
       <span class="lang-chip">🇬🇧 English</span>
@@ -482,12 +482,12 @@
       <div class="privacy-grid">
         <div>
           <div class="eyebrow" style="color:#7dffb0">Privacy &amp; cost</div>
-          <h2>Your key. Your audio. No middleman.</h2>
-          <p>BabelTable is Bring-Your-Own-Key with no subscription and no backend. You pay OpenAI directly for realtime usage, and the app tracks it locally so there are no surprises.</p>
+          <h2>Your conversation stays on your device.</h2>
+          <p>BabelTable has no account, translation subscription, backend, or per-minute charges. Download models before going offline; conversation processing stays on your device.</p>
         </div>
         <ul>
-          <li><span class="lock"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span><span>API key stored only in the iOS Keychain on your device.</span></li>
-          <li><span class="lock"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span><span>Audio streams directly to OpenAI over WebSocket — nothing through a third-party server.</span></li>
+          <li><span class="lock"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span><span>No account or credential is required.</span></li>
+          <li><span class="lock"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span><span>Speech and translations are processed locally with Apple frameworks.</span></li>
           <li><span class="lock"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 7l8-4 8 4-8 4-8-4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4 12l8 4 8-4" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span><span>Transcripts saved only on-device. No accounts, no analytics backend.</span></li>
         </ul>
       </div>
@@ -500,13 +500,13 @@
   <div class="wrap">
     <div class="reveal">
       <h2>Ready to <span class="gradient-text">break the language barrier?</span></h2>
-      <p>BabelTable is open source under the MIT license. Clone it, add your OpenAI key, and start talking.</p>
+      <p>BabelTable is open source under the MIT license. Build with Xcode 27, prepare your languages, and start talking.</p>
       <div class="btn-row">
-        <a class="btn btn-primary" href="https://github.com/everettjf/BabelTable">
+        <a class="btn btn-primary" href="https://github.com/everettjf/babeltable">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49v-1.7c-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.49-1.11-1.49-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05a9.4 9.4 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.94-2.35 4.81-4.58 5.06.36.32.68.94.68 1.9v2.82c0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.58 17.52 2 12 2Z"/></svg>
           Star on GitHub
         </a>
-        <a class="btn btn-ghost" href="https://platform.openai.com/api-keys">Get an OpenAI key ↗</a>
+        <a class="btn btn-ghost" href="https://github.com/everettjf/babeltable#setup">Setup instructions ↗</a>
       </div>
     </div>
   </div>
@@ -522,10 +522,10 @@
       BabelTable
     </a>
     <div class="foot-links">
-      <a href="https://github.com/everettjf/BabelTable">GitHub</a>
+      <a href="https://github.com/everettjf/babeltable">GitHub</a>
       <a href="privacy.html">Privacy</a>
-      <a href="https://github.com/everettjf/BabelTable/blob/main/LICENSE">License</a>
-      <a href="https://github.com/everettjf/BabelTable/issues">Issues</a>
+      <a href="https://github.com/everettjf/babeltable/blob/main/LICENSE">License</a>
+      <a href="https://github.com/everettjf/babeltable/issues">Issues</a>
     </div>
     <div class="foot-copy">© 2026 BabelTable · MIT License</div>
   </div>

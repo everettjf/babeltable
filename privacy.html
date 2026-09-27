@@ -35,33 +35,17 @@
 <body>
 <main>
   <h1>BabelTable Privacy Policy</h1>
-  <p class="updated">Last updated: May 31, 2026</p>
-
-  <p>BabelTable is a bring-your-own-key real-time translation app.</p>
-
-  <h2>Data We Collect</h2>
-  <p>BabelTable does not collect, sell, or share personal data through a developer-operated server. The developer operates no backend for this app.</p>
-
-  <h2>OpenAI API Key</h2>
-  <p>Your OpenAI API key is stored locally on your device in the iOS Keychain. BabelTable does not send your API key to any server controlled by the developer.</p>
-
-  <h2>Speech and Translation</h2>
-  <p>When you start a translation session, audio is sent directly from the app to OpenAI's realtime translation service using the API key you provide. OpenAI processes that audio to provide transcription and translation responses.</p>
-
-  <h2>Translation Refinement</h2>
-  <p>Translation refinement is on by default and can be turned off in Settings. When it is enabled, the transcript text for each finished turn is additionally sent to OpenAI's chat completions endpoint to improve punctuation and register. That request also goes directly from your device to OpenAI using the API key you provide.</p>
-
-  <h2>Local Conversation History</h2>
-  <p>Conversation transcripts may be saved locally on your device so you can review prior sessions. These saved sessions are not uploaded to a developer-operated server. You can delete them from within the app.</p>
-
-  <h2>Children</h2>
-  <p>BabelTable is not directed to children and does not knowingly collect personal information from children.</p>
-
-  <h2>Changes</h2>
-  <p>If this policy changes, the updated version will be published on this page with a new "last updated" date.</p>
-
-  <h2>Contact</h2>
-  <p>For privacy questions or support, open an issue at <a href="https://github.com/everettjf/babeltable/issues">github.com/everettjf/babeltable/issues</a>.</p>
+  <p class="updated">Last updated: September 27, 2026</p>
+  <h2>On-device processing</h2>
+  <p>BabelTable recognizes speech and translates text on your device using Apple's Speech and Translation frameworks. Conversation content is not sent to a cloud translation provider. No account, key, tracking, or advertising SDK is used. Audio is processed in memory and is not saved.</p>
+  <h2>Language model downloads</h2>
+  <p>Prepare speech and translation models while online before first use. Once installed, supported languages work offline. Apple manages model downloads and may collect framework usage and performance metrics; Translation metrics exclude original and translated content. Apple's services are governed by <a href="https://www.apple.com/legal/privacy/">Apple's privacy policy</a>.</p>
+  <h2>Local history and sharing</h2>
+  <p>Conversation drafts, transcripts, translations, duration totals, and limited diagnostics are stored locally. Device backups may include these files. Delete conversations in History and share them only when you choose. Deleting a conversation does not delete exported copies or backups. Capture pauses in the background and during interruptions.</p>
+  <h2>Upgrades</h2>
+  <p>The offline version deletes obsolete saved credentials without reading them. Existing conversations remain readable. Previously shared or remotely processed data is not removed by upgrading.</p>
+  <h2>Full policy and contact</h2>
+  <p>See the <a href="https://github.com/everettjf/babeltable/blob/main/PRIVACY.md">full privacy policy</a> or <a href="https://github.com/everettjf/babeltable/issues">contact us</a>. Do not post private conversations in public issues.</p>
 
   <footer>
     <p><a href="./">← BabelTable</a></p>

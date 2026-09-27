@@ -2,7 +2,7 @@ import AVFoundation
 import Foundation
 
 /// Captures microphone audio and emits PCM16 24kHz mono `Data` chunks
-/// suitable for `gpt-realtime-translate` `session.input_audio_buffer.append`.
+/// for the local speech analyzer. Audio is never written to disk or uploaded.
 ///
 /// Conversion runs on the audio tap; lifecycle and delivery are serialized on
 /// MainActor so a stopped capture cannot restart or deliver stale audio.
@@ -22,7 +22,7 @@ final class AudioCaptureService: AudioCapturing {
         }
     }
 
-    /// Target sample rate required by the OpenAI Realtime API.
+    /// Stable intermediate capture format; the analyzer converter adapts it to its model.
     static let targetSampleRate: Double = 24_000
 
     /// Audio session capture mode. `.measurement` keeps raw audio (no AGC),
@@ -41,38 +41,17 @@ final class AudioCaptureService: AudioCapturing {
     }
 
     /// Interruption lifecycle reported to the coordinator. `began`: the system
-    /// paused capture (call, Siri…). `resumed`: the engine restarted
-    /// successfully. `resumeFailed`: the restart attempt threw.
+    /// paused capture (call, Siri…). `resumed`: the system permits rebuilding
+    /// capture. `resumeFailed`: capture cannot resume.
     nonisolated enum InterruptionEvent: Sendable {
         case began
         case resumed
         case resumeFailed(String)
     }
 
-    nonisolated enum InterruptionDecision: Equatable, Sendable {
-        case pause
-        case restart
-        case fail(String)
-        case ignore
-    }
-
-    /// Converts the untyped AVAudioSession notification payload into a small,
-    /// deterministic state-machine input that can be unit tested without audio
-    /// hardware or a running AVAudioSession.
-    nonisolated static func interruptionDecision(typeRaw: UInt?, optionsRaw: UInt?) -> InterruptionDecision {
-        guard let typeRaw,
-              let type = AVAudioSession.InterruptionType(rawValue: typeRaw) else { return .ignore }
-        switch type {
-        case .began:
-            return .pause
-        case .ended:
-            let options = AVAudioSession.InterruptionOptions(rawValue: optionsRaw ?? 0)
-            return options.contains(.shouldResume)
-                ? .restart
-                : .fail("System declined audio resume")
-        @unknown default:
-            return .ignore
-        }
+    /// iOS 27 distinguishes our own deactivation from a system interruption.
+    nonisolated static func shouldPause(for source: AVAudioSession.DeactivationSource) -> Bool {
+        source == .system
     }
 
     private var engine = AVAudioEngine()
@@ -143,7 +122,7 @@ final class AudioCaptureService: AudioCapturing {
         let tapBufferSize = AVAudioFrameCount(nativeFormat.sampleRate * 0.1)
 
         input.removeTap(onBus: 0)
-        input.installTap(onBus: 0, bufferSize: tapBufferSize, format: nativeFormat) { [weak self] buffer, _ in
+        try input.__installTap(onBus: 0, bufferSize: tapBufferSize, format: nativeFormat, error: ()) { [weak self] buffer, _ in
             guard let chunk = converterState.convert(buffer) else { return }
             Task { @MainActor [weak self] in
                 guard let self, self.generation == requestGeneration, self.wantsCapture else { return }
@@ -179,11 +158,19 @@ final class AudioCaptureService: AudioCapturing {
     private func installObservers() {
         guard observers.isEmpty else { return }
         let center = NotificationCenter.default
-        observers.append(center.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] note in
-            let decision = Self.interruptionDecision(
-                typeRaw: note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
-                optionsRaw: note.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt)
-            Task { @MainActor [weak self] in self?.handleInterruption(decision) }
+        observers.append(center.addObserver(forName: AVAudioSession.didBecomeInactiveNotification, object: nil, queue: .main) { [weak self] note in
+            guard let context = note.userInfo?[AVAudioSession.deactivationContextKey] as? AVAudioSession.DeactivationContext,
+                  Self.shouldPause(for: context.source) else { return }
+            Task { @MainActor [weak self] in
+                guard let self, self.wantsCapture else { return }
+                self.engine.pause()
+                self.onInterruption?(.began)
+            }
+        })
+        observers.append(center.addObserver(forName: AVAudioSession.resumptionRecommendationNotification, object: nil, queue: .main) { [weak self] note in
+            guard let context = note.userInfo?[AVAudioSession.resumptionContextKey] as? AVAudioSession.ResumptionContext,
+                  context.recommendation == .shouldResume else { return }
+            Task { @MainActor [weak self] in self?.onInterruption?(.resumed) }
         })
         observers.append(center.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { [weak self] note in
             let raw = note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt
@@ -201,37 +188,12 @@ final class AudioCaptureService: AudioCapturing {
         })
     }
 
-    private func handleInterruption(_ decision: InterruptionDecision) {
-        guard wantsCapture else { return }
-        switch decision {
-        case .pause:
-            engine.pause()
-            onInterruption?(.began)
-        case .restart:
-            recoverCapture()
-        case .fail(let message):
-            onInterruption?(.resumeFailed(message))
-        case .ignore: break
-        }
-    }
-
     private func recoverCapture() {
         guard wantsCapture else { return }
-        onInterruption?(.began)
-        stop()
-        let requestGeneration = generation
-        Task { @MainActor [weak self] in
-            guard let self, self.generation == requestGeneration else { return }
-            do {
-                try await self.start(mode: self.activeMode)
-                guard self.generation == requestGeneration, self.wantsCapture else { return }
-                self.onInterruption?(.resumed)
-            } catch {
-                guard self.generation == requestGeneration else { return }
-                self.onInterruption?(.resumeFailed("Audio capture could not resume"))
-            }
-        }
+        // The coordinator owns rebuilding both capture and the analyzer timeline.
+        onMediaServicesReset?()
     }
+
 }
 
 /// Owned by one engine tap. The converter never races with engine lifecycle

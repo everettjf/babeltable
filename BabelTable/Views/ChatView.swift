@@ -40,15 +40,6 @@ struct ChatView: View {
                             )
                             .id(turn.id)
                         }
-                        if let drainingTurn = coordinator.drainingTurn {
-                            // Input is closed but translation may still be streaming.
-                            ChatTurnBubble(
-                                turn: drainingTurn,
-                                primaryLanguageCode: coordinator.primaryLanguageCode,
-                                secondaryLanguageCode: coordinator.secondaryLanguageCode
-                            )
-                            .id(drainingTurn.id)
-                        }
                         if let openTurn = coordinator.openTurn {
                             ChatTurnBubble(
                                 turn: openTurn,
@@ -80,7 +71,7 @@ struct ChatView: View {
             .onChange(of: coordinator.openTurn?.translatedText) { _, _ in
                 scrollToBottom(proxy)
             }
-            .onChange(of: coordinator.drainingTurn?.translatedText) { _, _ in
+            .onChange(of: coordinator.chatTurns.last?.translatedText) { _, _ in
                 scrollToBottom(proxy)
             }
             .overlay(alignment: .bottomTrailing) {
@@ -127,7 +118,7 @@ struct ChatView: View {
 
     private var placeholderDescription: String {
         coordinator.status == .running
-            ? "Speak in either language and the translation will appear here."
+            ? "Speak in the selected language. The translation follows each completed phrase."
             : "Tap Start to begin. Each utterance shows what was said and its translation."
     }
 }

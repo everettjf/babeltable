@@ -1,167 +1,59 @@
-<div align="center">
-
 # BabelTable
 
-Repository: <https://github.com/everettjf/babeltable>
+Native, offline, two-way speech translation for iPhone and iPad. Requires **iOS 27** and a device that supports Apple's on-device SpeechTranscriber.
 
-**Real-time, two-way speech translation for face-to-face conversations.**
+Choose the speaking language, talk, and read the translation. Speech recognition uses Apple's SpeechAnalyzer and SpeechTranscriber; text translation uses installed Apple Translation models. There is no cloud translation, account, API key, backend, subscription, or per-minute charge.
 
-Put your phone on the table between two people and let them talk in their own
-languages — BabelTable transcribes and translates both sides live, powered by
-OpenAI's `gpt-realtime-translate`.
+## Setup
 
-[![Platform](https://img.shields.io/badge/platform-iOS%2026%2B-blue.svg)](https://www.apple.com/ios/)
-[![Swift](https://img.shields.io/badge/Swift-5-orange.svg)](https://swift.org)
-[![UI](https://img.shields.io/badge/UI-SwiftUI-brightgreen.svg)](https://developer.apple.com/xcode/swiftui/)
-[![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)](LICENSE)
+1. Choose two different languages in Settings.
+2. Tap **Download language models** while online. Allow Apple's model preparation prompts and keep the app open until **Ready for offline use** appears. Downloads require storage; availability depends on the device and language pair.
+3. Tap **Start translating**, allow microphone access, and wait for **Live**.
+4. Speak in the selected language. Original words appear progressively; translations follow finalized phrases. Switch the speaking language for the other person and wait for **Live** again.
+5. Tap **Stop** to complete the final phrase and save the conversation to History.
 
-**[🌐 Visit the website →](https://xnu.app/babeltable/)**
+After model preparation, conversations work without an internet connection, including airplane mode. If system-managed models are removed, prepare them again while online. Model downloads are the only online step in the translation workflow.
 
-</div>
+## Behavior
 
-<div align="center">
-  <img src="app-store-screenshots/BabelTable-01.png" width="30%" alt="Face-to-face mode" />
-  &nbsp;
-  <img src="app-store-screenshots/BabelTable-02.png" width="30%" alt="Side-by-side chat mode" />
-  &nbsp;
-  <img src="app-store-screenshots/BabelTable-03.png" width="30%" alt="Settings" />
-</div>
+- Chat layout or face-to-face layout with the far panel rotated 180 degrees.
+- Explicit speaking-language selection; speak one at a time. Simultaneous overlapping speech and automatic speaker identification are not supported.
+- Progressive source captions, phrase-by-phrase translations, microphone level, and optional volume balancing.
+- Utterance IDs keep delayed translations attached to the correct source phrase.
+- Local drafts, History, deletion, and text sharing. Existing archives remain readable.
+- Backgrounding or an audio interruption pauses capture and preserves visible text. Audio spoken during a pause is not recorded. Return to the app or tap Resume to continue.
+- No audio recording to disk, remote transcript refinement, or spoken translation playback.
 
----
+Language choices are candidates, not a promise of availability. Settings checks both speech recognition locales and both translation directions on the actual device before declaring a pair ready.
 
-## What it is
+## Development
 
-BabelTable is a [BYOK](#byok--cost) (Bring Your Own Key) iOS app for live,
-in-person interpreting. Two people pick their languages once, hit **Start**, and
-talk naturally. The app auto-detects who's speaking which language and streams
-the translation as they go — no turn-taking, no buttons to pass back and forth.
-
-It runs **two simultaneous realtime sessions** (one per direction) over WebSocket
-straight to OpenAI. Your API key lives in the device Keychain; there is no
-developer-operated server in the loop.
-
-## Features
-
-- 🎙️ **Live two-way translation** — both directions stream at once; the model
-  auto-detects the source language from the audio.
-- 🔄 **Two display modes**
-  - **Face-to-face** — two panels, the top one rotated 180° for the person
-    sitting across from you.
-  - **Side-by-side chat** — a single chronological transcript showing each
-    utterance and its translation.
-- 🎚️ **Audio tuning for the room** — microphone-scenario presets (phone held
-  close vs. on a table between two people) and optional auto-leveling to balance
-  near and far speakers.
-- 🗂️ **Local archive** — past sessions are saved on-device so you can review
-  transcripts later.
-- 🔐 **Privacy by design** — API key in the Keychain, audio sent directly to
-  OpenAI, nothing routed through a third-party backend. See [PRIVACY.md](PRIVACY.md).
-- 🩺 **Built-in diagnostics** — a live log of the realtime connection for
-  debugging.
-
-## Supported languages
-
-Translation output supports the 13 languages offered by `gpt-realtime-translate`:
-
-| | | | |
-|---|---|---|---|
-| English | 中文 (Mandarin) | Español | Português |
-| Français | Deutsch | Italiano | 日本語 |
-| 한국어 | Русский | हिन्दी | Bahasa Indonesia |
-| Tiếng Việt | | | |
-
-## Requirements
-
-- iOS 26.0 or later
-- Xcode 26+
-- An [OpenAI API key](https://platform.openai.com/api-keys) with access to
-  `gpt-realtime-translate`
-
-## Getting started
+Use Xcode 27 with the iOS 27 SDK:
 
 ```bash
-git clone https://github.com/everettjf/BabelTable.git
-cd BabelTable
-open BabelTable.xcodeproj
+xcodebuild -project BabelTable.xcodeproj -scheme BabelTable \
+  -destination 'platform=iOS Simulator,name=iPhone 17e' test
 ```
 
-Then in Xcode:
+The local pipeline uses iOS 27's AnalyzerInputConverter and the new audio-session deactivation/resumption notifications. Installed-only TranslationSession instances use the low-latency strategy; runtime startup never requests model downloads or falls back to a remote service.
 
-1. Select your team under **Signing & Capabilities** (the bundle identifier is
-   `com.xnu.babeltable` — change it to your own).
-2. Build and run on a **physical device** — the iOS Simulator cannot capture
-   microphone audio.
-3. On first launch, configure your OpenAI API key (stored in Keychain) and two different languages, or choose **Set up later** to browse the app.
-4. Tap **Start**, read and accept the OpenAI data-sharing notice, and wait for **Live** before speaking. Both speakers should agree to recording.
+Deterministic tests inject audio and local engines to verify cancellation, phrase ownership, direction switching, final draining, model errors, interruption recovery, draft persistence, and save retry. Apple's actual speech/translation models and audio routes require a physical device; simulator tests do not establish translation accuracy. See [release validation](docs/APP_STORE_CLOSEOUT.md).
 
-## BYOK & cost
+## Privacy
 
-BabelTable has no subscription and no backend. You bring your own OpenAI API key
-and pay OpenAI directly for realtime audio usage. Because translation runs as
-two concurrent realtime sessions, expect roughly double the per-minute audio
-cost of a single session. The app tracks session duration locally as an estimate, including time spent paused. OpenAI billing is authoritative. Optional refinement makes separate paid text requests and is off for new installations.
+Audio and translation content are processed on the device. Transcripts and usage duration are saved locally; device backups may include them. Sharing is user initiated. Apple manages model downloads and may collect framework usage/performance diagnostics. See [PRIVACY.md](PRIVACY.md).
 
-## Architecture
-
-A small, dependency-free SwiftUI app:
-
-```
-BabelTable/
-├── Models/        Language, AppSettings, ChatSession, KeychainStore, TranslationError
-├── Views/         Home, Chat, Transcript, Settings, Archive, Onboarding, Diagnostics
-└── Services/
-    ├── RealtimeTranslator      One WebSocket session → one target language
-    ├── TranslationCoordinator  Orchestrates both directions + state
-    ├── AudioCaptureService     Microphone capture & framing
-    ├── SessionStore            Local persistence of transcripts
-    ├── UsageTracker            Local usage accounting
-    └── DiagnosticsLogger       Connection log for debugging
-```
-
-Each `RealtimeTranslator` owns a single connection to `gpt-realtime-translate`
-configured for one output language; the `TranslationCoordinator` runs two of
-them and merges their transcript deltas into the UI. Transient socket failures
-are auto-reconnected with exponential backoff.
-
-## Testing
-
-Unit tests cover complete coordinator state transitions using injected audio and connections, draft recovery, save failure and retry, short utterances, error classification, and reconnect backoff:
-
-```bash
-xcodebuild test \
-  -project BabelTable.xcodeproj \
-  -scheme BabelTable \
-  -destination 'platform=iOS Simulator,name=iPhone 17'
-```
+Upgrading removes the obsolete saved credential without reading its contents. Previously saved conversations remain available.
 
 ## Deployment
 
-`deploy.sh` bumps the build number, archives, and uploads to TestFlight:
+`deploy.sh` archives and uploads to TestFlight. Verify the intended version/build and tests first:
 
 ```bash
 source ~/.zshrc   # supplies APPLE_ID and APP_SPECIFIC_PASSWORD
 ./deploy.sh
 ```
 
-## Privacy
+## Contributing and license
 
-BabelTable collects no personal data through any developer-operated server. Your
-API key stays in the Keychain, audio goes directly to OpenAI, and transcripts
-are saved in local app storage (which iOS device backups may include). Full policy: [PRIVACY.md](PRIVACY.md).
-
-## Contributing
-
-Issues and pull requests are welcome. For bugs or feature ideas, please
-[open an issue](https://github.com/everettjf/BabelTable/issues).
-
-## License
-
-Released under the [MIT License](LICENSE).
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=everettjf/babeltable&type=Date)](https://star-history.com/#everettjf/babeltable&Date)
-
-## Release validation
-
-See [the 1.0 closeout checklist](docs/APP_STORE_CLOSEOUT.md) for verified engineering results, remaining physical-device speech acceptance, and App Review setup. Wait for **Live** before speaking; audio during a connection pause is not queued or translated. Turn matching uses timing and language detection, so simultaneous speech and closely overlapping translations still require real-device acceptance.
+[Repository](https://github.com/everettjf/babeltable) · [Issues](https://github.com/everettjf/babeltable/issues) · [MIT License](LICENSE)

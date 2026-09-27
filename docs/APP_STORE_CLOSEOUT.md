@@ -1,62 +1,48 @@
-# BabelTable 1.0 App Store closeout
+# Offline release validation
 
-Updated: 2026-09-22. This checklist supersedes completion percentages in the historical roadmap. Source version remains 1.0 (9); no TestFlight upload or App Store submission has been performed as part of this closeout.
+Updated: September 27, 2026. This replaces the previous cloud-release checklist. No TestFlight upload or App Store submission is part of this change.
 
-## Implemented
+## Implementation
 
-- Saving returns success/failure. Failed final saves retain the session in memory, suppress the success notice, and block clearing/starting until retry succeeds. Text remains shareable. Deletion failures remain visible and do not remove the item from the list.
-- Periodic drafts contain finalized, draining, and open turns. Background/offline transitions snapshot immediately. Final saves use the same UUID. Refinement updates a live draft immediately; stopping cancels pending refinement, preserving the final displayed text in the archive.
-- Live requires both configured connections and ready microphone capture. No audio is forwarded while starting, interrupted, or reconnecting. Connection generations reject stale events after stop/rebuild. Capture generations prevent an old asynchronous start/restart from taking ownership after stop. Configuration acknowledgement has a timeout, and retries remain bounded.
-- Short utterances have no four-character threshold. Both candidate outputs are retained for routing, including output received before input. Recognized language changes split rapid exchanges. Consecutive same-language turns use the actual previous output time so a later translation is not incorrectly attached to the previous turn. Reconnecting closes the previous connection's pending turns.
-- Audio engine lifecycle is serialized on MainActor. Each tap owns its converter; route changes rebuild capture and media-services reset replaces the engine. User stop cancels pending recovery.
-- Explicit OpenAI data-sharing consent gates realtime and refinement requests. Consent can be withdrawn in Settings, which stops capture. Privacy policy and OpenAI privacy links are available in-app.
-- Onboarding can be skipped. Key deletion preserves history. Keychain writes/deletes report failure; saved keys use device-only protection. The UI distinguishes key authentication from realtime model/billing availability.
-- Refinement defaults off for new installations; existing choices are preserved. Labels, refinement, glossary, audio tuning, and diagnostics live in Advanced settings. Current/visible session language labels stay tied to that session.
-- Archived conversations export actual UTF-8 `.txt` files. Current caption text remains shareable without stopping.
-- Server diagnostics use fixed error categories, not remote payloads or messages. Unknown event names are not logged. README and privacy policy describe optional refinement, local history/backups, estimates, and recording pauses.
+- Minimum iOS version: 27.0 for the app and tests; build using Xcode 27.
+- One on-device SpeechTranscriber/SpeechAnalyzer for the explicitly selected speaker, with iOS 27 AnalyzerInputConverter and audio deactivation/resumption notifications.
+- Installed-only TranslationSession using the low-latency strategy. No network transport, API-key UI, remote refinement, account consent, or billing calculations.
+- Settings prepares both speech locales and both text-translation directions. Models require an initial online download and storage. Unsupported devices/pairs are reported; conversation startup checks assets again and never initiates downloads.
+- Partial captions replace earlier revisions. Final translations attach to stable utterance IDs. Stop and direction changes drain the analyzer before completion; preparation and draining have bounded waits.
+- Interruption/background paths preserve visible text, cancel old callbacks, and pause the microphone. Nothing spoken during pauses is captured. Resume rebuilds the local pipeline.
+- One stable archive UUID is used across drafts and the final save. Failed saves retain content and block a new conversation until retry succeeds.
+- Earlier archives remain readable. A delete-only migration removes the obsolete Keychain credential without reading it.
+- README, privacy policy, website copy, and the privacy manifest reflect on-device processing. English is the project's only supported UI localization.
 
-## Automated evidence
+## Automated verification
 
-- iPhone 17 / iOS 27 simulator: 54 XCTest + 1 Swift Testing tests passed on 2026-09-22 before the final lifecycle review.
-- Everett iPhone 27 (iPhone 17 Pro): the same 55 tests passed on the physical device. Tests use isolated directories, defaults and test-only Keychain entries, injected transports, and injected audio. They do not prove live microphone accuracy or actual interruption recovery.
-- Release simulator build passed.
-- Final source verification: 57 XCTest + 1 Swift Testing tests passed on the iPhone 17 simulator; final Release simulator build passed. Result bundle: `/tmp/babeltable-turn-order.xcresult` on the verification host.
-- Twelve UIKit-hosted layout attachments cover Home, Onboarding, Settings, and Privacy at iPhone/iPad point sizes plus accessibility text size. Visual review found and fixed truncated language/status controls at large text sizes. These are rendered layout checks, not a physical iPad or VoiceOver interaction pass.
-- The layout test also passed on the iPad Air 11-inch (M4) simulator; Home and Privacy attachments were visually reviewed at 2048 × 2732 pixels.
-- The follow-up physical-device rerun ended with a test-runner launch failure after waiting for Everett iPhone 27 to be unlocked (lost pending connection before launch). It did not verify the final source. An earlier 55-test physical-device run passed; it does not substitute for a final rerun after lifecycle and turn-order changes.
-- Xcode device interaction requires first-time approval in the Xcode MCP menu. This is pending; no in-app interaction/real microphone acceptance is claimed.
+- iOS 27 simulator: lifecycle, archive compatibility, persistence failures/retry, and layout tests.
+- Device-only integration test: translates English/Chinese in both directions using installed models. It skips explicitly if assets are missing and never accesses the microphone or requests model downloads.
+- Physical-device test execution and exact results are recorded below after validation.
 
-The repository has no source-controlled app-test workflow. GitHub exposes a Pages deployment workflow; its result is checked after push. Local Xcode tests are the application verification gate.
+## Required physical acceptance before release
 
-## Physical speech acceptance — still required
+- [ ] Prepare English/Chinese from a clean installation. Check permission prompts, progress, cancellation, retry, storage failure, and both directions becoming ready.
+- [ ] Enable airplane mode after preparation. Start, speak, switch languages, stop, and reopen History; verify correct source/translation and zero content network traffic.
+- [ ] Repeat with another supported language pair; confirm unsupported combinations show an explanation.
+- [ ] Test long sentences, short phrases, pauses, rapid direction switches, and accidental overlapping speech. The product requires one speaker at a time; it does not promise simultaneous speaker separation.
+- [ ] Test phone/Siri interruptions, Bluetooth connect/disconnect, media-services reset, background/foreground, and stop during preparation/draining on real hardware.
+- [ ] Test VoiceOver, large text, iPad, and face-to-face viewing. Refresh App Store screenshots for the offline version.
+- [ ] Review translation quality and latency with real speakers. Simulator/mocked tests do not establish these properties.
 
-Run the installed closeout build with your own key, model access, and available credit. Both people must agree to audio processing. Wait for Live before speaking.
+## App Review notes
 
-- [ ] Chinese/English, at least ten turns each. Include “你好”, “谢谢”, “Hi”, rapid alternating speakers, and overlapping speech. Verify attribution, ordering and full translation in both layouts.
-- [ ] Thirty-minute conversation with at least fifty turns. Verify responsiveness, the final history entry, and the exported `.txt` content. Exactly one archive per conversation.
-- [ ] Background/foreground and lock/unlock. Relaunch after terminating during a draft; received text must remain available in history.
-- [ ] Incoming call/Siri interruption, including an interruption during reconnection. Never show Live with a stopped microphone.
-- [ ] Airplane mode/offline, Wi-Fi to cellular, and prolonged failure. No duplicate connections; visible paused/error state. Speech during pauses is intentionally not captured.
-- [ ] Built-in microphone, Bluetooth connect/disconnect/reconnect, and USB-C audio if available. Verify capture resumes in the new format.
-- [ ] Share to Files/Notes; compare Unicode and every completed turn. Delete history and relaunch; it must not return.
-- [ ] VoiceOver reads meaningful controls in both layouts. Large text and iPad layouts remain usable, including the privacy sheet and save error actions.
+BabelTable translates speech locally using Apple's Speech and Translation frameworks. Requires iOS 27 and hardware/languages supported by SpeechTranscriber. No account, API key, subscription, or in-app purchase is required.
 
-Timing-based turn association cannot establish perfect attribution for simultaneously overlapping speakers. Retain this as a real-device acceptance gate rather than claiming automated proof.
+Open Settings, select two different languages, and tap Download language models while online. Complete Apple's model prompts and wait for Ready for offline use. Tap Start translating, grant microphone permission, and wait for Live. Speak in the selected language; original captions appear progressively and translated text follows finalized phrases. Switch the speaking language before the other person speaks. Prepared models work in airplane mode. Stop saves the conversation locally; History supports reading, deletion, and text sharing. Output is text, not spoken audio.
 
-## App Store Connect preparation
+The bundled privacy manifest declares no developer-collected data. Confirm App Store privacy answers against the current Apple framework disclosures; model-download/API performance diagnostics are controlled by Apple. Device backups and user-requested sharing are described in the privacy policy.
 
-- Verify final version/build, distribution signing, current supported submission SDK, and App Store Connect processing status before upload.
-- Use `source ~/.zshrc` and `./deploy.sh` for TestFlight. Do not print, inspect, or copy `APPLE_ID` or `APP_SPECIFIC_PASSWORD`. The script increments the build; report the actual uploaded build only after success.
-- Set an accessible privacy URL and support URL. Match App Privacy answers to direct OpenAI audio/text processing and the bundled privacy manifest; do not equate “no developer backend” with “no third-party processing.”
-- Refresh iPhone/iPad screenshots after final UI review. Store copy must state BYOK, separately billed OpenAI usage, internet requirement, text-only translation output, and iOS 26 minimum. Do not promise offline operation, perfect simultaneous speaker attribution, or spoken playback.
-- Provide reviewers a working way to exercise realtime translation and clear setup instructions. A screenshot/demo video supplements functional access; it does not replace it. Do not commit or publicly paste a review key. Confirm the private review-access arrangement with the owner before submitting.
+## Verification results (2026-09-27)
 
-## Suggested review notes
-
-BabelTable provides two-way, face-to-face speech transcription and text translation using two direct OpenAI realtime connections. It has no developer account system or developer backend. Users supply an OpenAI API key with realtime translation access and sufficient credit. The app itself has no subscription or in-app purchase.
-
-On launch, configure the key and two different languages, or choose Set up later to inspect settings/history. Tap Start translating, review the OpenAI data-sharing notice, and agree before capture begins. Allow microphone access and wait for Live. Speak in either selected language; translations appear as text. Use Settings to switch between chat and face-to-face layouts. Stop saves one local conversation; History allows reading, deletion, and `.txt` export.
-
-Refinement is optional and off for a new installation. If enabled in Advanced settings, it makes additional billed text requests to OpenAI. Privacy and OpenAI permission in Settings explains the data flow and allows withdrawal. Backgrounding or losing connectivity pauses capture; return to the app/network to resume.
-
-Private review-access details: to be supplied in App Store Connect, never in this repository.
+- Xcode 27.0 (27A266a), iPhone 17e / iOS 27 simulator: **28 tests executed, 27 passed, 1 explicitly skipped, 0 failures**. The skipped test requires physical-device translation assets.
+- The audio converter test exercises the real iOS 27 converter with ten PCM16 chunks plus flush, checking that one second of input remains one second after resampling. A preliminary float-output test hit the framework's PCM16 precondition; the test now uses the required format and runtime validates the model format before creating the converter.
+- Exported and reviewed simulator screenshots of Settings and the large-text home screen; the layout suite renders iPhone, large-text iPhone, and iPad variants of Home, Settings, and onboarding.
+- Generic iOS **Release build succeeded** with signing disabled. The physical-device Debug test build also compiled and signed successfully.
+- Physical iPhone 17 Pro: the first device run completed after unlocking, with **27 tests executed, 26 passed, 1 skipped, 0 failures**. The installed-model test confirmed the English/Chinese pair is supported but reported **needsDownload**. A later run including the audio converter test was blocked by the device locking again. Actual microphone, airplane-mode translation, installed-model integration, and audio-route acceptance remain unverified. Prepare models and complete the checklist before release.
+- No TestFlight upload performed.

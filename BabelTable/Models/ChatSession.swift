@@ -22,11 +22,9 @@ struct ChatTurn: Identifiable, Codable, Hashable, Sendable {
     var sourceLanguageCode: String
     var sourceText: String
     var translatedLanguageCode: String
-    /// Raw machine translation streamed from gpt-realtime-translate.
+    /// On-device translation for this utterance.
     var translatedText: String
-    /// Optional context-aware refinement of `translatedText` produced after the
-    /// turn closes. Nil until (and unless) refinement runs and succeeds.
-    /// Optional so older archived turns still decode.
+    /// Legacy archive field, retained so existing saved conversations still decode.
     var refinedText: String?
 
     /// The translation to show: the refined version when available, else the

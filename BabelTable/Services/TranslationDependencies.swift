@@ -11,10 +11,17 @@ protocol AudioCapturing: AnyObject {
     func stop()
 }
 
-nonisolated protocol RealtimeConnection: AnyObject, Sendable {
-    func connect()
-    func close()
-    func appendAudio(_ data: Data)
+enum OfflineEvent: Sendable {
+    case transcript(id: UUID, text: String, isFinal: Bool)
+    case translation(id: UUID, text: String)
+    case failure(String)
 }
 
-extension RealtimeTranslator: RealtimeConnection {}
+@MainActor
+protocol OfflineTranslating: AnyObject {
+    var onEvent: (@MainActor @Sendable (OfflineEvent) -> Void)? { get set }
+    func start(source: String, target: String) async throws
+    func appendAudio(_ data: Data)
+    func finish() async throws
+    func cancel()
+}

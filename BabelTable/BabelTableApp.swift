@@ -8,6 +8,7 @@ struct BabelTableApp: App {
     @State private var coordinator: TranslationCoordinator
 
     init() {
+        LegacyCredentialCleanup.run()
         let s = AppSettings()
         let store = SessionStore()
         let usage = UsageTracker()
@@ -35,7 +36,7 @@ struct BabelTableApp: App {
         }
     }
 
-    /// Browsing history and configuring the app never require an API key.
+    /// Welcome explains model preparation and offline conversations.
     private var needsOnboarding: Binding<Bool> {
         Binding(
             get: { !settings.hasCompletedOnboarding },

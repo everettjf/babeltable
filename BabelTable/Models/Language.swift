@@ -15,7 +15,7 @@ struct Language: Identifiable, Hashable, Codable, Sendable {
 }
 
 enum SupportedLanguages {
-    // The 13 output languages supported by gpt-realtime-translate.
+    // Candidate languages. Actual offline availability is checked on this device.
     static let outputs: [Language] = [
         Language(code: "en", name: "English", nativeName: "English", flag: "🇺🇸"),
         Language(code: "zh", name: "Chinese (Mandarin)", nativeName: "中文", flag: "🇨🇳"),
@@ -61,14 +61,14 @@ enum SupportedLanguages {
         return resolve(code)?.nativeName ?? normalize(code).uppercased()
     }
 
-    /// English display name for prompting the refinement model.
+    /// English display name.
     static func englishName(forCode code: String) -> String {
         resolve(code)?.name ?? normalize(code)
     }
 }
 
 /// Immutable language configuration captured when a live session starts.
-/// Settings may change while a session is running, but its two WebSockets and
+/// Settings may change while a session is running, but its local recognizer and
 /// archived transcript must keep the original pair until the next session.
 struct SessionLanguagePair: Equatable, Sendable {
     let primary: String

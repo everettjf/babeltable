@@ -9,12 +9,11 @@ final class ReleaseLayoutTests: XCTestCase {
     func testReleaseLayouts() async throws {
         let name = "BabelTable-Layout-\(UUID())"
         let defaults = UserDefaults(suiteName: name)!
-        let keychain = KeychainStore(service: name)
-        let settings = AppSettings(defaults: defaults, keychain: keychain)
+        let settings = AppSettings(defaults: defaults)
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent(name)
         let store = SessionStore(folderURL: folder)
         let usage = UsageTracker(fileURL: folder.appendingPathComponent("usage.data"))
-        let coordinator = TranslationCoordinator(settings: settings, store: store, usage: usage, monitorConnectivity: false)
+        let coordinator = TranslationCoordinator(settings: settings, store: store, usage: usage)
         defer {
             defaults.removePersistentDomain(forName: name)
             try? FileManager.default.removeItem(at: folder)
@@ -22,8 +21,7 @@ final class ReleaseLayoutTests: XCTestCase {
         let screens: [(String, AnyView)] = [
             ("home", AnyView(HomeView())),
             ("onboarding", AnyView(OnboardingView())),
-            ("settings", AnyView(NavigationStack { SettingsView() })),
-            ("consent", AnyView(AIConsentView()))
+            ("settings", AnyView(NavigationStack { SettingsView() }))
         ]
         for (device, size, typeSize) in [
             ("iPhone", CGSize(width: 393, height: 852), DynamicTypeSize.large),

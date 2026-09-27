@@ -2,7 +2,7 @@ import Foundation
 import Observation
 
 /// In-app log buffer for diagnosing issues that don't surface in the UI —
-/// WebSocket errors, OpenAI error payloads, audio failures, etc. The buffer
+/// local storage and audio lifecycle failures. The buffer
 /// is shown in Settings → Diagnostics and can be copied/shared.
 ///
 /// Logging from background threads is safe: call the nonisolated `diagLog(…)`
@@ -142,7 +142,7 @@ final class DiagnosticsLogger {
 }
 
 /// Nonisolated logging entry point — safe to call from any thread, including
-/// WebSocket receive loops and audio callbacks. Timestamp is captured at the
+/// audio callbacks and local services. Timestamp is captured at the
 /// call site so ordering remains meaningful even though the actual append
 /// hops to MainActor.
 nonisolated func diagLog(_ level: DiagnosticsLogger.Level, tag: String, _ message: String) {

@@ -8,7 +8,6 @@ struct HomeView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.scenePhase) private var scenePhase
 
-    @State private var showingConsent = false
     @State private var showingSettings = false
     @State private var showingArchive = false
 
@@ -50,12 +49,8 @@ struct HomeView: View {
             .navigationTitle("BabelTable")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
-            .safeAreaInset(edge: .top, spacing: 0) { networkBanner }
             .sheet(isPresented: $showingArchive) { ArchiveView() }
             .sheet(isPresented: $showingSettings) { settingsSheet }
-            .sheet(isPresented: $showingConsent) {
-                AIConsentView { Task { await coordinator.start() } }
-            }
             .alert(currentError?.title ?? "Translation error", isPresented: errorBinding) {
                 errorActions
             } message: {
@@ -81,26 +76,12 @@ struct HomeView: View {
                 Button { coordinator.newConversation() } label: {
                     Label("New conversation", systemImage: "plus")
                 }
-                .disabled(!coordinator.hasContent || coordinator.hasUnsavedSession)
+                .disabled(!coordinator.hasContent || coordinator.hasUnsavedSession || coordinator.isSessionActive)
                 Button { showingSettings = true } label: {
                     Label("Settings", systemImage: "gearshape")
                 }
             } label: { Image(systemName: "ellipsis.circle") }
                 .accessibilityLabel("More")
-        }
-    }
-
-    @ViewBuilder
-    private var networkBanner: some View {
-        if let message = coordinator.degradationMessage {
-            Label(message, systemImage: coordinator.networkCondition == .offline ? "wifi.slash" : "network.badge.shield.half.filled")
-                .font(.caption.weight(.medium))
-                .foregroundStyle(coordinator.networkCondition == .offline ? BabelTheme.warning : .secondary)
-                .frame(maxWidth: .infinity)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(.regularMaterial)
-                .accessibilityElement(children: .combine)
         }
     }
 
@@ -190,7 +171,7 @@ struct HomeView: View {
                     LanguagePill(languageCode: coordinator.displayedSecondaryLanguage.code, title: coordinator.displayedSecondaryLanguage.nativeName, tint: BabelTheme.remote)
                     Spacer(minLength: 4)
                     StatusPill(title: statusText, systemImage: statusSymbol, tint: statusColor,
-                               isAnimated: coordinator.status == .starting || coordinator.status == .reconnecting)
+                               isAnimated: coordinator.status == .starting || coordinator.status == .paused)
                 }
 
                 HStack(spacing: 14) {
@@ -219,16 +200,24 @@ struct HomeView: View {
                 }
                 .accessibilityIdentifier("save.failure")
             }
-            if !settings.hasAPIKey {
-                Button(dynamicTypeSize.isAccessibilitySize ? "Add API key" : "Add an OpenAI API key to start") { showingSettings = true }
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(BabelTheme.warning)
-            } else {
-                Text(activityDescription)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity)
+            if coordinator.status == .running {
+                Picker("Speaking language", selection: Binding(
+                    get: { coordinator.speakingPrimary },
+                    set: { coordinator.selectSpeaker(primary: $0) })) {
+                    Text(coordinator.displayedPrimaryLanguage.nativeName).tag(true)
+                    Text(coordinator.displayedSecondaryLanguage.nativeName).tag(false)
+                }
+                .pickerStyle(.segmented)
+                .accessibilityIdentifier("translation.speaker")
+            }
+            if coordinator.status == .paused {
+                Button("Resume conversation") { coordinator.resume() }.buttonStyle(.borderedProminent)
+            }
+            Text(activityDescription)
+                .font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            if coordinator.status == .idle {
+                Button("Prepare offline languages") { showingSettings = true }.font(.caption)
             }
         }
         .frame(maxWidth: isRegular ? 720 : .infinity)
@@ -243,7 +232,7 @@ struct HomeView: View {
     @ViewBuilder
     private var actionButton: some View {
         switch coordinator.status {
-        case .starting, .running, .reconnecting, .stopping:
+        case .starting, .running, .paused, .stopping:
             Button { coordinator.stop() } label: {
                 Label("Stop", systemImage: "stop.fill")
                     .font(isRegular ? .title3.weight(.semibold) : .headline)
@@ -256,8 +245,7 @@ struct HomeView: View {
             .disabled(coordinator.status == .stopping)
         case .idle, .error:
             Button {
-                if settings.hasAIConsent { Task { await coordinator.start() } }
-                else { showingConsent = true }
+                Task { await coordinator.start() }
             } label: {
                 Label(dynamicTypeSize.isAccessibilitySize ? "Start" : "Start translating", systemImage: "mic.fill")
                     .font(isRegular ? .title3.weight(.semibold) : .headline)
@@ -267,7 +255,7 @@ struct HomeView: View {
             .buttonStyle(.borderedProminent)
             .buttonBorderShape(.capsule)
             .tint(BabelTheme.primary)
-            .disabled(!settings.hasAPIKey || coordinator.status == .starting || coordinator.hasUnsavedSession)
+            .disabled(coordinator.status == .starting || coordinator.hasUnsavedSession)
             .accessibilityIdentifier("translation.start")
         }
     }
@@ -275,9 +263,9 @@ struct HomeView: View {
     private var statusText: String {
         switch coordinator.status {
         case .idle: "Ready"
-        case .starting: "Connecting"
+        case .starting: "Preparing"
         case .running: "Live"
-        case .reconnecting: "Reconnecting"
+        case .paused: "Paused"
         case .stopping: "Saving"
         case .error: "Needs attention"
         }
@@ -286,9 +274,9 @@ struct HomeView: View {
     private var statusSymbol: String {
         switch coordinator.status {
         case .idle: "checkmark.circle.fill"
-        case .starting: "antenna.radiowaves.left.and.right"
+        case .starting: "cpu"
         case .running: "waveform"
-        case .reconnecting: "arrow.trianglehead.2.clockwise.rotate.90"
+        case .paused: "arrow.trianglehead.2.clockwise.rotate.90"
         case .stopping: "archivebox.fill"
         case .error: "exclamationmark.triangle.fill"
         }
@@ -297,7 +285,7 @@ struct HomeView: View {
     private var statusColor: Color {
         switch coordinator.status {
         case .idle: .secondary
-        case .starting, .reconnecting: BabelTheme.warning
+        case .starting, .paused: BabelTheme.warning
         case .running: BabelTheme.live
         case .stopping: BabelTheme.primary
         case .error: BabelTheme.warning
@@ -306,15 +294,14 @@ struct HomeView: View {
 
     private var activityDescription: String {
         switch coordinator.status {
-        case .idle: return "Place the phone between you, then speak naturally in either language."
-        case .starting: return "Opening two secure realtime translation sessions…"
+        case .idle: return "Prepare your languages in Settings, then start an offline conversation."
+        case .starting: return "Preparing on-device speech recognition…"
         case .running:
             if let turn = coordinator.openTurn, !turn.sourceText.isEmpty {
                 return "Heard: \(String(turn.sourceText.suffix(90)))"
             }
-            if coordinator.drainingTurn != nil { return "Finishing the current translation…" }
-            return "Listening for either speaker…"
-        case .reconnecting: return "Translation is paused. Please wait before speaking again."
+            return "Speak in the selected language. Switch when the other person speaks."
+        case .paused: return "Microphone paused. Tap Resume when you are ready to speak."
         case .stopping: return "Saving this conversation to History…"
         case .error: return "Open the alert for recovery options."
         }

@@ -1,23 +1,10 @@
 import Foundation
 import Observation
 
-/// Records how many minutes of microphone audio have been streamed through
-/// the translation API per day, and computes an estimated USD cost.
-///
-/// `gpt-realtime-translate` is billed at $0.034 per minute of audio per
-/// session; we run two parallel sessions (one per target language) so the
-/// effective rate is `pricePerMinute * parallelSessions`.
+/// Local conversation duration history. No billing or remote usage reporting.
 @Observable
 @MainActor
 final class UsageTracker {
-    static let pricePerMinutePerSession: Double = 0.034
-    static let parallelSessions: Int = 2
-
-    /// Per-minute cost for a typical BabelTable conversation (USD).
-    static var pricePerMinute: Double {
-        pricePerMinutePerSession * Double(parallelSessions)
-    }
-
     private(set) var entries: [DailyUsage] = []
 
     private let fileURL: URL
@@ -53,11 +40,8 @@ final class UsageTracker {
     var todayMinutes: Double { minutes(daysAgo: 0) }
     var yesterdayMinutes: Double { minutes(daysAgo: 1) }
 
-    var todayCost: Double { todayMinutes * Self.pricePerMinute }
-    var yesterdayCost: Double { yesterdayMinutes * Self.pricePerMinute }
 
     var totalMinutes: Double { entries.reduce(0) { $0 + $1.minutes } }
-    var totalCost: Double { totalMinutes * Self.pricePerMinute }
 
     /// Daily minutes for the last 7 days, oldest first, with zero-fill.
     var last7Days: [DailyUsage] {

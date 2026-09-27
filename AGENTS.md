@@ -1,6 +1,6 @@
 # Repository Guidelines
 
-BabelTable is a native iOS app for real-time, two-way, face-to-face speech translation using two OpenAI realtime sessions. The shipped product name is BabelTable; do not reintroduce the older SpeakTwo repository name in source links.
+BabelTable is a native iOS 27 app for offline, two-way, face-to-face speech translation using Apple's Speech and Translation frameworks. Speakers explicitly select their language and take turns. The shipped product name is BabelTable; do not reintroduce the older SpeakTwo repository name in source links.
 
 ## Structure
 
@@ -13,10 +13,10 @@ BabelTable is a native iOS app for real-time, two-way, face-to-face speech trans
 
 ```bash
 xcodebuild -project BabelTable.xcodeproj -scheme BabelTable \
-  -destination 'platform=iOS Simulator,name=iPhone 16' test
+  -destination 'platform=iOS Simulator,name=iPhone 17e' test
 ```
 
-Voice, audio-route, interruption, and reconnection changes require real-device verification.
+Voice, audio-route, interruption, and model preparation changes require real-device verification.
 
 ## TestFlight Release
 
@@ -34,9 +34,9 @@ Voice, audio-route, interruption, and reconnection changes require real-device v
 
 ## Conventions
 
-- Keep API keys in Keychain and never write audio or credentials to logs.
-- Separate audio capture, realtime transport, coordination, persistence, and UI state.
-- Bound reconnect backoff and prevent duplicate active sessions.
+- Never upload conversation content or write audio or credentials to logs. Do not add cloud translation fallbacks.
+- Separate audio capture, on-device speech/translation, model preparation, coordination, persistence, and UI state.
+- Bound preparation/draining waits and prevent duplicate active sessions. Download models only through explicit preparation.
 - Handle interruption, route changes, simultaneous speech, cancellation, and partial transcript ordering.
 - Add user-facing strings to every supported localization.
 
