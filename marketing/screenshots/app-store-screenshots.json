@@ -1,0 +1,679 @@
+{
+  "schemaVersion": 2,
+  "appName": "BabelTable",
+  "themeId": "dark-bold",
+  "fontId": "system-sans",
+  "connectedCanvas": false,
+  "locales": [
+    "en"
+  ],
+  "locale": "en",
+  "device": "ipad",
+  "orientation": "portrait",
+  "appIcon": "/app-icon.png",
+  "slidesByDevice": {
+    "iphone": [
+      {
+        "id": "iphone-1",
+        "layout": "hero",
+        "label": {
+          "en": "BABELTABLE"
+        },
+        "headline": {
+          "en": "Talk across\nlanguages."
+        },
+        "screenshot": "/screenshots/apple/iphone/en/chat.png",
+        "inverted": false,
+        "transforms": {
+          "caption": {
+            "x": 79.2,
+            "y": 110,
+            "width": 1161.6,
+            "height": 520
+          },
+          "device": {
+            "x": 155,
+            "y": 730,
+            "width": 1010,
+            "height": 2058
+          }
+        },
+        "typography": {
+          "headlineScale": 1.2
+        }
+      },
+      {
+        "id": "iphone-2",
+        "layout": "device-top",
+        "label": {
+          "en": "ON-DEVICE TRANSLATION"
+        },
+        "headline": {
+          "en": "Go offline.\nKeep talking."
+        },
+        "screenshot": "/screenshots/apple/iphone/en/welcome.png",
+        "inverted": false,
+        "textElements": [
+          {
+            "id": "setup",
+            "text": {
+              "en": "Download languages once while online."
+            },
+            "transform": {
+              "x": 80,
+              "y": 2640,
+              "width": 1160,
+              "height": 100
+            },
+            "fontSize": 36,
+            "color": "#CBD5E1",
+            "align": "center"
+          }
+        ],
+        "transforms": {
+          "caption": {
+            "x": 79.2,
+            "y": 2007.6,
+            "width": 1161.6,
+            "height": 500
+          }
+        }
+      },
+      {
+        "id": "iphone-3",
+        "layout": "device-bottom",
+        "label": {
+          "en": "FACE TO FACE"
+        },
+        "headline": {
+          "en": "Face to face.\nWord for word."
+        },
+        "screenshot": "/screenshots/apple/iphone/en/face.png",
+        "inverted": true,
+        "transforms": {
+          "caption": {
+            "x": 79.2,
+            "y": 110,
+            "width": 1161.6,
+            "height": 520
+          },
+          "device": {
+            "x": 155,
+            "y": 730,
+            "width": 1010,
+            "height": 2058
+          }
+        }
+      },
+      {
+        "id": "iphone-4",
+        "layout": "two-devices",
+        "label": {
+          "en": "LOCAL HISTORY"
+        },
+        "headline": {
+          "en": "Keep the words\nthat matter."
+        },
+        "screenshot": "/screenshots/apple/iphone/en/detail.png",
+        "inverted": false,
+        "screenshotSecondary": "/screenshots/apple/iphone/en/history.png"
+      },
+      {
+        "id": "iphone-5",
+        "layout": "no-device",
+        "label": {
+          "en": "MADE FOR CONVERSATION"
+        },
+        "headline": {
+          "en": "Speak. Read.\nUnderstand."
+        },
+        "screenshot": "/screenshots/apple/iphone/en/chat.png",
+        "inverted": false,
+        "imageElements": [
+          {
+            "id": "sample0",
+            "src": "/screenshots/apple/iphone/en/face.png",
+            "transform": {
+              "x": 26.400000000000002,
+              "y": 1000,
+              "width": 422.40000000000003,
+              "height": 1100,
+              "rotation": -7
+            },
+            "fit": "contain"
+          },
+          {
+            "id": "sample1",
+            "src": "/screenshots/apple/iphone/en/chat.png",
+            "transform": {
+              "x": 448.8,
+              "y": 1000,
+              "width": 422.40000000000003,
+              "height": 1100,
+              "rotation": 0
+            },
+            "fit": "contain"
+          },
+          {
+            "id": "sample2",
+            "src": "/screenshots/apple/iphone/en/detail.png",
+            "transform": {
+              "x": 871.2,
+              "y": 1000,
+              "width": 422.40000000000003,
+              "height": 1100,
+              "rotation": 7
+            },
+            "fit": "contain"
+          }
+        ],
+        "textElements": [
+          {
+            "id": "features",
+            "text": {
+              "en": "Offline translation  ·  Local history\nNo account  ·  No API key"
+            },
+            "transform": {
+              "x": 70,
+              "y": 2400,
+              "width": 1180,
+              "height": 230
+            },
+            "fontSize": 42,
+            "color": "#CBD5E1",
+            "align": "center"
+          }
+        ],
+        "transforms": {
+          "caption": {
+            "x": 79.2,
+            "y": 180,
+            "width": 1161.6,
+            "height": 600
+          }
+        }
+      }
+    ],
+    "android": [
+      {
+        "id": "s_muk7irg3_5",
+        "layout": "hero",
+        "label": {
+          "en": "MEET YOUR APP"
+        },
+        "headline": {
+          "en": "Sell one\nidea per slide."
+        },
+        "screenshot": ""
+      },
+      {
+        "id": "s_muk7irg3_6",
+        "layout": "device-bottom",
+        "label": {
+          "en": "FEATURE 01"
+        },
+        "headline": {
+          "en": "Your headline\nlives here."
+        },
+        "screenshot": ""
+      },
+      {
+        "id": "s_muk7irg3_7",
+        "layout": "two-devices",
+        "label": {
+          "en": "FEATURE 02"
+        },
+        "headline": {
+          "en": "Show two\nscreens at once."
+        },
+        "screenshot": "",
+        "screenshotSecondary": ""
+      },
+      {
+        "id": "s_muk7irg3_8",
+        "layout": "device-top",
+        "label": {
+          "en": "FEATURE 03"
+        },
+        "headline": {
+          "en": "Flip the contrast\nfor visual rhythm."
+        },
+        "screenshot": "",
+        "inverted": true
+      },
+      {
+        "id": "s_muk7irg3_9",
+        "layout": "no-device",
+        "label": {
+          "en": "MORE"
+        },
+        "headline": {
+          "en": "And so\nmuch more."
+        },
+        "screenshot": ""
+      }
+    ],
+    "ipad": [
+      {
+        "id": "ipad-1",
+        "layout": "hero",
+        "label": {
+          "en": "BABELTABLE"
+        },
+        "headline": {
+          "en": "Talk across\nlanguages."
+        },
+        "screenshot": "/screenshots/apple/ipad/en/chat.png",
+        "inverted": false,
+        "transforms": {
+          "caption": {
+            "x": 123.83999999999999,
+            "y": 110,
+            "width": 1816.32,
+            "height": 520
+          },
+          "device": {
+            "x": 292,
+            "y": 780,
+            "width": 1480,
+            "height": 2006
+          }
+        },
+        "typography": {
+          "headlineScale": 1.05
+        }
+      },
+      {
+        "id": "ipad-2",
+        "layout": "device-top",
+        "label": {
+          "en": "ON-DEVICE TRANSLATION"
+        },
+        "headline": {
+          "en": "Go offline.\nKeep talking."
+        },
+        "screenshot": "/screenshots/apple/ipad/en/welcome.png",
+        "inverted": false,
+        "textElements": [
+          {
+            "id": "setup",
+            "text": {
+              "en": "Download languages once while online."
+            },
+            "transform": {
+              "x": 80,
+              "y": 2550,
+              "width": 1904,
+              "height": 100
+            },
+            "fontSize": 48,
+            "color": "#CBD5E1",
+            "align": "center"
+          }
+        ],
+        "transforms": {
+          "caption": {
+            "x": 123.83999999999999,
+            "y": 1926.3999999999999,
+            "width": 1816.32,
+            "height": 500
+          }
+        }
+      },
+      {
+        "id": "ipad-3",
+        "layout": "device-bottom",
+        "label": {
+          "en": "FACE TO FACE"
+        },
+        "headline": {
+          "en": "Face to face.\nWord for word."
+        },
+        "screenshot": "/screenshots/apple/ipad/en/face.png",
+        "inverted": true,
+        "transforms": {
+          "caption": {
+            "x": 123.83999999999999,
+            "y": 110,
+            "width": 1816.32,
+            "height": 520
+          },
+          "device": {
+            "x": 292,
+            "y": 780,
+            "width": 1480,
+            "height": 2006
+          }
+        },
+        "typography": {
+          "headlineScale": 1.05
+        }
+      },
+      {
+        "id": "ipad-4",
+        "layout": "two-devices",
+        "label": {
+          "en": "LOCAL HISTORY"
+        },
+        "headline": {
+          "en": "Keep the words\nthat matter."
+        },
+        "screenshot": "/screenshots/apple/ipad/en/detail.png",
+        "inverted": false,
+        "screenshotSecondary": "/screenshots/apple/ipad/en/history.png"
+      },
+      {
+        "id": "ipad-5",
+        "layout": "no-device",
+        "label": {
+          "en": "MADE FOR CONVERSATION"
+        },
+        "headline": {
+          "en": "Speak. Read.\nUnderstand."
+        },
+        "screenshot": "/screenshots/apple/ipad/en/chat.png",
+        "inverted": false,
+        "imageElements": [
+          {
+            "id": "sample0",
+            "src": "/screenshots/apple/ipad/en/face.png",
+            "transform": {
+              "x": 41.28,
+              "y": 1000,
+              "width": 660.48,
+              "height": 1100,
+              "rotation": -7
+            },
+            "fit": "contain"
+          },
+          {
+            "id": "sample1",
+            "src": "/screenshots/apple/ipad/en/chat.png",
+            "transform": {
+              "x": 701.7600000000001,
+              "y": 1000,
+              "width": 660.48,
+              "height": 1100,
+              "rotation": 0
+            },
+            "fit": "contain"
+          },
+          {
+            "id": "sample2",
+            "src": "/screenshots/apple/ipad/en/detail.png",
+            "transform": {
+              "x": 1362.24,
+              "y": 1000,
+              "width": 660.48,
+              "height": 1100,
+              "rotation": 7
+            },
+            "fit": "contain"
+          }
+        ],
+        "textElements": [
+          {
+            "id": "features",
+            "text": {
+              "en": "Offline translation  ·  Local history\nNo account  ·  No API key"
+            },
+            "transform": {
+              "x": 70,
+              "y": 2400,
+              "width": 1924,
+              "height": 230
+            },
+            "fontSize": 58,
+            "color": "#CBD5E1",
+            "align": "center"
+          }
+        ],
+        "transforms": {
+          "caption": {
+            "x": 123.83999999999999,
+            "y": 180,
+            "width": 1816.32,
+            "height": 600
+          }
+        }
+      }
+    ],
+    "tvos": [
+      {
+        "id": "s_muk7irg3_d",
+        "layout": "hero",
+        "label": {
+          "en": "MEET YOUR APP"
+        },
+        "headline": {
+          "en": "Made for\nthe living room."
+        },
+        "screenshot": ""
+      },
+      {
+        "id": "s_muk7irg3_e",
+        "layout": "split-landscape",
+        "label": {
+          "en": "FEATURE 01"
+        },
+        "headline": {
+          "en": "One idea\nper screen."
+        },
+        "screenshot": ""
+      },
+      {
+        "id": "s_muk7irg3_f",
+        "layout": "device-top",
+        "label": {
+          "en": "FEATURE 02"
+        },
+        "headline": {
+          "en": "Flip the contrast."
+        },
+        "screenshot": "",
+        "inverted": true
+      },
+      {
+        "id": "s_muk7irg3_g",
+        "layout": "no-device",
+        "label": {
+          "en": "MORE"
+        },
+        "headline": {
+          "en": "And so\nmuch more."
+        },
+        "screenshot": ""
+      }
+    ],
+    "watchos": [
+      {
+        "id": "s_muk7irg3_h",
+        "layout": "hero",
+        "label": {
+          "en": "MEET YOUR APP"
+        },
+        "headline": {
+          "en": "On your\nwrist."
+        },
+        "screenshot": ""
+      },
+      {
+        "id": "s_muk7irg3_i",
+        "layout": "device-bottom",
+        "label": {
+          "en": "FEATURE 01"
+        },
+        "headline": {
+          "en": "One glance.\nDone."
+        },
+        "screenshot": ""
+      },
+      {
+        "id": "s_muk7irg3_j",
+        "layout": "device-top",
+        "label": {
+          "en": "FEATURE 02"
+        },
+        "headline": {
+          "en": "Always\nwith you."
+        },
+        "screenshot": "",
+        "inverted": true
+      }
+    ],
+    "carplay": [
+      {
+        "id": "s_muk7irg3_k",
+        "layout": "split-landscape",
+        "label": {
+          "en": "CARPLAY"
+        },
+        "headline": {
+          "en": "Eyes on\nthe road."
+        },
+        "screenshot": ""
+      },
+      {
+        "id": "s_muk7irg3_l",
+        "layout": "device-bottom",
+        "label": {
+          "en": "FEATURE 01"
+        },
+        "headline": {
+          "en": "Everything, one tap away."
+        },
+        "screenshot": ""
+      },
+      {
+        "id": "s_muk7irg3_m",
+        "layout": "device-top",
+        "label": {
+          "en": "FEATURE 02"
+        },
+        "headline": {
+          "en": "Made for every drive."
+        },
+        "screenshot": "",
+        "inverted": true
+      }
+    ],
+    "mac": [
+      {
+        "id": "s_muk7irg3_n",
+        "layout": "hero",
+        "label": {
+          "en": "MEET YOUR APP"
+        },
+        "headline": {
+          "en": "Made for\nyour Mac."
+        },
+        "screenshot": ""
+      },
+      {
+        "id": "s_muk7irg3_o",
+        "layout": "split-landscape",
+        "label": {
+          "en": "FEATURE 01"
+        },
+        "headline": {
+          "en": "Everything in\none window."
+        },
+        "screenshot": ""
+      },
+      {
+        "id": "s_muk7irg3_p",
+        "layout": "device-top",
+        "label": {
+          "en": "FEATURE 02"
+        },
+        "headline": {
+          "en": "One shortcut away."
+        },
+        "screenshot": "",
+        "inverted": true
+      },
+      {
+        "id": "s_muk7irg3_q",
+        "layout": "two-devices",
+        "label": {
+          "en": "FEATURE 03"
+        },
+        "headline": {
+          "en": "Work across windows."
+        },
+        "screenshot": "",
+        "screenshotSecondary": ""
+      },
+      {
+        "id": "s_muk7irg3_r",
+        "layout": "no-device",
+        "label": {
+          "en": "MORE"
+        },
+        "headline": {
+          "en": "And so\nmuch more."
+        },
+        "screenshot": ""
+      }
+    ],
+    "android-7": [
+      {
+        "id": "s_muk7irg3_s",
+        "layout": "hero",
+        "label": {
+          "en": "MEET YOUR APP"
+        },
+        "headline": {
+          "en": "Pocket-sized\npower."
+        },
+        "screenshot": ""
+      },
+      {
+        "id": "s_muk7irg3_t",
+        "layout": "split-landscape",
+        "label": {
+          "en": "FEATURE 01"
+        },
+        "headline": {
+          "en": "Wide canvas,\nbigger ideas."
+        },
+        "screenshot": ""
+      }
+    ],
+    "android-10": [
+      {
+        "id": "s_muk7irg3_u",
+        "layout": "hero",
+        "label": {
+          "en": "MEET YOUR APP"
+        },
+        "headline": {
+          "en": "Made for\nthe big screen."
+        },
+        "screenshot": ""
+      },
+      {
+        "id": "s_muk7irg3_v",
+        "layout": "split-landscape",
+        "label": {
+          "en": "FEATURE 01"
+        },
+        "headline": {
+          "en": "Wide canvas,\nbigger ideas."
+        },
+        "screenshot": ""
+      }
+    ],
+    "feature-graphic": [
+      {
+        "id": "s_muk7irg3_w",
+        "layout": "feature-graphic",
+        "label": {},
+        "headline": {
+          "en": "Your tagline goes here."
+        },
+        "screenshot": ""
+      }
+    ]
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "copyright": "2026 Feng Zhu",
+  "description": "BabelTable helps two people speak across a language barrier, right across the table. Speech recognition and translation run on your device using Apple’s Speech and Translation frameworks.\n\nSPEAK FACE TO FACE\nPlace your iPhone or iPad between you. The opposite-facing panels let each person read from their side of the table. Prefer sitting together? Switch to the chat layout for a shared conversation view.\n\nPREPARE ONCE, TRANSLATE OFFLINE\nDownload the speech and translation models for your chosen languages while connected to the internet. Once prepared, supported language pairs work offline. No OpenAI account, API key, or cloud translation service is required.\n\nTAKE TURNS NATURALLY\nSelect the language of the person speaking, then talk. Read the original captions and the translated text. Switch the speaking language when it is the other person’s turn.\n\nKEEP YOUR CONVERSATIONS\nReview saved conversations in History and share a text transcript when you choose. Conversation archives are stored locally on your device.\n\nREQUIREMENTS\nRequires iOS 27 or later and a device and language pair supported by Apple’s on-device speech recognition and translation. Initial model preparation requires an internet connection and available storage. Language availability varies. Speakers take turns and select their language; overlapping speech is not separated. Translations are displayed as text.",
+  "keywords": "translator,translation,offline,speech,conversation,travel,bilingual,captions,language,face to face",
+  "marketingUrl": "https://xnu.app/babeltable/",
+  "notes": "BabelTable is an offline speech translation app for iPhone and iPad (iOS 27+). No login, account, API key, subscription, or in-app purchase is required.\n\nTo test:\n1. Open Settings from the More menu. Choose English and Chinese (or another supported pair).\n2. While online, tap Download language models and complete Apple’s model preparation prompts. Keep the app open until Ready for offline use appears.\n3. Return home, tap Start translating, and grant microphone permission. Select the speaking language and speak one person at a time. Original captions and translated text appear on screen.\n4. Switch the speaking language for the other person. Stop to save the conversation; open History to view and share it.\n\nAfter initial model preparation, speech and translation are processed on-device. A physical device supporting SpeechTranscriber is required; simulator model availability is limited. No conversation content is sent to our servers. Output is text, not spoken audio.",
+  "promotionalText": "Speak face to face with offline translation. Prepare languages once, then keep your conversations on your device. No account or API key needed.",
+  "supportUrl": "https://github.com/everettjf/babeltable/issues",
+  "versionString": "1.0",
+  "name": "BabelTable",
+  "subtitle": "Offline voice translation",
+  "primaryCategory": "Travel",
+  "secondaryCategory": "Utilities",
+  "privacyPolicyUrl": "https://xnu.app/babeltable/privacy.html",
+  "signInRequired": false,
+  "dataCollection": "No developer-collected data; conversations remain on device.",
+  "contentRights": "No third-party content catalog or streaming service.",
+  "ageRatingAnswers": "No built-in mature, violent, sexual, medical or gambling content. No unrestricted web browser, advertising, social network or remote messaging. Not made for kids.",
+  "priceRecommendation": "Free",
+  "build": "10",
+  "appId": "6807469213"
+}

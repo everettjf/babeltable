@@ -1,6 +1,6 @@
 # Offline release validation
 
-Updated: September 27, 2026. This replaces the previous cloud-release checklist. No TestFlight upload or App Store submission is part of this change.
+Updated: September 27, 2026. This replaces the previous cloud-release checklist. The offline implementation was validated before upload. See [App Store submission preparation](APP_STORE_SUBMISSION_2026-09-27.md) for the later version 1.0 (10) upload and pending submission items.
 
 ## Implementation
 
@@ -46,4 +46,4 @@ The bundled privacy manifest declares no developer-collected data. Confirm App S
 - Exported and reviewed simulator screenshots of Settings and the large-text home screen; the layout suite renders iPhone, large-text iPhone, and iPad variants of Home, Settings, and onboarding.
 - Generic iOS **Release build succeeded** with signing disabled. The physical-device Debug test build also compiled and signed successfully.
 - Physical iPhone 17 Pro with prepared English/Chinese models: **34 tests passed, 0 skipped, 0 failures**. This includes both translation directions and synthetic speech recognition/translation on first start and restart. During investigation, Apple’s translation service disconnected and its availability API returned unsupported; startup now retries negative checks and treats empty catalogs as temporarily unavailable. This does not establish that every reported download prompt had the same cause. A second run of both device integration tests also passed. Actual microphone input, airplane-mode operation, and audio-route acceptance remain unverified; complete the checklist before release.
-- No TestFlight upload performed.
+- Later uploaded version 1.0 (10) through `deploy.sh` for App Store submission preparation. Review submission remains pending; see the linked preparation report.
