@@ -213,9 +213,11 @@ struct HomeView: View {
             if coordinator.status == .paused {
                 Button("Resume conversation") { coordinator.resume() }.buttonStyle(.borderedProminent)
             }
-            Text(activityDescription)
-                .font(.caption).foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            if let activityDescription {
+                Text(activityDescription)
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .frame(maxWidth: isRegular ? 720 : .infinity)
         .padding(.horizontal, BabelTheme.pagePadding)
@@ -289,9 +291,9 @@ struct HomeView: View {
         }
     }
 
-    private var activityDescription: String {
+    private var activityDescription: String? {
         switch coordinator.status {
-        case .idle: return "Prepare your languages in Settings, then start an offline conversation."
+        case .idle: return nil
         case .starting: return "Preparing on-device speech recognition…"
         case .running:
             if let turn = coordinator.openTurn, !turn.sourceText.isEmpty {
