@@ -216,9 +216,6 @@ struct HomeView: View {
             Text(activityDescription)
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            if coordinator.status == .idle {
-                Button("Prepare offline languages") { showingSettings = true }.font(.caption)
-            }
         }
         .frame(maxWidth: isRegular ? 720 : .infinity)
         .padding(.horizontal, BabelTheme.pagePadding)

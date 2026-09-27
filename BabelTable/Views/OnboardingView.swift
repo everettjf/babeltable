@@ -3,29 +3,58 @@ import SwiftUI
 struct OnboardingView: View {
     @Environment(AppSettings.self) private var settings
     @Environment(\.dismiss) private var dismiss
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    Image(systemName: "bubble.left.and.bubble.right.fill").font(.system(size: 52)).foregroundStyle(BabelTheme.primary)
-                    Text("Two languages. One table.").font(.largeTitle.bold())
-                    Text("Private conversations, translated on your iPhone.").font(.title3)
-                    Label("Prepare your languages", systemImage: "arrow.down.circle")
-                        .font(.headline)
-                    Text("Choose two languages in Settings and download their speech and translation models. This first setup requires an internet connection and available storage.")
-                    Label("Speak one at a time", systemImage: "mic.fill").font(.headline)
-                    Text("Start a conversation, choose the speaking language, and talk. Read the original words as they appear; the translation follows each completed phrase. Switch the speaking language for the other person.")
-                    Label("Keep it offline", systemImage: "wifi.slash").font(.headline)
-                    Text("After setup, supported languages work in airplane mode. No account or API key is needed. Audio stays on your device and is never saved; conversations are stored in History.")
-                    Button("Get started") {
-                        settings.hasCompletedOnboarding = true
-                        dismiss()
-                    }
-                    .buttonStyle(.borderedProminent).controlSize(.large)
+                    Image(systemName: "bubble.left.and.bubble.right.fill")
+                        .font(.system(size: 44))
+                        .foregroundStyle(BabelTheme.primary)
+                    Text("Two languages. One table.")
+                        .font(.largeTitle.bold())
+
+                    welcomeStep("Download once", systemImage: "arrow.down.circle",
+                                detail: "Choose two languages in Settings and download their models while online.")
+                    welcomeStep("Take turns", systemImage: "mic.fill",
+                                detail: "Select who is speaking. Read the translation, then switch.")
+                    welcomeStep("Talk offline", systemImage: "wifi.slash",
+                                detail: "After setup, translation stays on your device. No account needed.")
                 }
-                .padding(28).frame(maxWidth: 620).frame(maxWidth: .infinity)
+                .padding(24)
+                .frame(maxWidth: 620)
+                .frame(maxWidth: .infinity)
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                Button {
+                    settings.hasCompletedOnboarding = true
+                    dismiss()
+                } label: {
+                    Text("Get started")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity, minHeight: 32)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .accessibilityIdentifier("onboarding.getStarted")
+                .frame(maxWidth: 572)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 16)
+                .frame(maxWidth: .infinity)
+                .background(.regularMaterial)
             }
             .background(BabelTheme.pageBackground)
+        }
+    }
+
+    private func welcomeStep(_ title: LocalizedStringKey, systemImage: String,
+                             detail: LocalizedStringKey) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(title, systemImage: systemImage)
+                .font(.headline)
+            Text(detail)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }
