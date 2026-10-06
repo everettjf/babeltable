@@ -57,6 +57,7 @@ struct SettingsView: View {
                 Link("Privacy Policy", destination: URL(string: "https://github.com/everettjf/babeltable/blob/main/PRIVACY.md")!)
             }
             Section("About") {
+                    Link("Discord", destination: URL(string: "https://discord.gg/eGzEaP6TzR")!)
                 LabeledContent("Requires", value: "iOS 27")
                 NavigationLink("Diagnostics") { DiagnosticsView() }
                 NavigationLink("How to use BabelTable") { OnboardingView() }

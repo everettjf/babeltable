@@ -1,5 +1,7 @@
 # BabelTable
 
+[Discord](https://discord.gg/eGzEaP6TzR)
+
 Native, offline, two-way speech translation for iPhone and iPad. Requires **iOS 27** and a device that supports Apple's on-device SpeechTranscriber.
 
 Choose the speaking language, talk, and read the translation. Speech recognition uses Apple's SpeechAnalyzer and SpeechTranscriber; text translation uses installed Apple Translation models. There is no cloud translation, account, API key, backend, subscription, or per-minute charge.
